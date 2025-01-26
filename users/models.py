@@ -18,3 +18,7 @@ class Profile(models.Model):
         if img.height > 300 or img.width > 300:
             ouput_size = (300, 300)
             img.save(self.image.path)
+    
+    
+    def __str__(self):
+        return self.title   
