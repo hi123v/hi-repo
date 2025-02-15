@@ -10,10 +10,10 @@ body {
     margin: 0;
   }
   .bg-steel {
-    background-color: #5f788a;
+    background-color: #28a745;
   }
   .site-header .navbar-nav .nav-link {
-    color: #cbd5db;
+    color: #ff9800;
   }
   .site-header .navbar-nav .nav-link:hover {
     color: #ffffff;
@@ -32,7 +32,7 @@ body {
     color: #444444;
   }
   a.article-title:hover {
-    color: #428bca;
+    color: #ff9800;
     text-decoration: none;
   }
   .article-content {
