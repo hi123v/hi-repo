@@ -1,68 +1,130 @@
 body {
-    background: #fafafa;
-    color: #333333;
-    margin-top: 5rem;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    color: #444444;
-  }
-  ul {
-    margin: 0;
-  }
-  .bg-steel {
-    background-color: #28a745;
-  }
-  .site-header .navbar-nav .nav-link {
-    color: #ff9800;
-  }
-  .site-header .navbar-nav .nav-link:hover {
-    color: #ffffff;
-  }
-  .site-header .navbar-nav .nav-link.active {
-    font-weight: 500;
-  }
-  .content-section {
-    background: #ffffff;
-    padding: 10px 20px;
-    border: 1px solid #dddddd;
-    border-radius: 3px;
-    margin-bottom: 20px;
-  }
-  .article-title {
-    color: #444444;
-  }
-  a.article-title:hover {
-    color: #ff9800;
-    text-decoration: none;
-  }
-  .article-content {
-    white-space: pre-line;
-  }
-  .article-img {
-    height: 65px;
-    width: 65px;
-    margin-right: 16px;
-  }
-  .article-metadata {
-    padding-bottom: 1px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid #e3e3e3
-  }
-  .article-metadata a:hover {
-    color: #333;
-    text-decoration: none;
-  }
-  .article-svg {
-    width: 25px;
-    height: 25px;
-    vertical-align: middle;
-  }
-  .account-img {
-    height: 125px;
-    width: 125px;
-    margin-right: 20px;
-    margin-bottom: 16px;
-  }
-  .account-heading {
-    font-size: 2.5rem;
-  }
+  background: #fafafa;
+  color: #333333;
+  margin-top: 5rem;
+}
+h1, h2, h3, h4, h5, h6 {
+  color: #444444;
+}
+ul {
+  margin: 0;
+}
+.bg-steel {
+  background-color: #28a745; /* Green background color */
+}
+.site-header {
+  background: linear-gradient(45deg, #28a745, #ff9800); /* Gradient background with green and orange */
+}
+.site-header .navbar-nav .nav-link {
+  color: #ffffff; /* White link color */
+}
+.site-header .navbar-nav .nav-link:hover {
+  color: #ffc107; /* Yellow link hover color */
+}
+.site-header .navbar-nav .nav-link.active {
+  font-weight: 500;
+}
+.content-section {
+  background: #ffffff;
+  padding: 10px 20px;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Box shadow */
+}
+.article-title {
+  color: #444444;
+}
+a.article-title:hover {
+  color: #ffc107; /* Yellow article title hover color */
+  text-decoration: underline; /* Underline on hover */
+}
+.article-content {
+  white-space: pre-line;
+}
+.article-img {
+  height: 65px;
+  width: 65px;
+  margin-right: 16px;
+}
+.article-metadata {
+  padding-bottom: 1px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e3e3e3;
+}
+.article-metadata a:hover {
+  color: #333; /* Metadata link hover color */
+  text-decoration: none;
+}
+.article-svg {
+  width: 25px;
+  height: 25px;
+  vertical-align: middle;
+}
+.account-img {
+  height: 125px;
+  width: 125px;
+  margin-right: 20px;
+  margin-bottom: 16px;
+}
+.account-heading {
+  font-size: 2.5rem;
+}
+
+/* Sidebar Styles */
+#sidebar {
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  padding-top: 20px;
+  background-color: #f8f9fa; /* Light gray background color */
+  border-right: 1px solid #dee2e6;
+  transition: transform 0.3s ease;
+  transform: translateX(-100%); /* Initially hide the sidebar */
+}
+#sidebar.active {
+  transform: translateX(0); /* Show the sidebar when active */
+}
+#sidebar .nav-link {
+  color: #333;
+}
+#sidebar .nav-link:hover {
+  background-color: #e9ecef; /* Corrected color value */
+  color: #333;
+}
+#sidebar .nav-link.active {
+  background-color: #28a745;
+  color: #fff;
+}
+
+/* Hamburger Menu Styles */
+.hamburger-menu {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 101; /* Ensure it is above the sidebar */
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  outline: none; /* Remove default focus outline */
+}
+.hamburger-menu:focus {
+  outline: none; /* Remove default focus outline */
+}
+.hamburger-menu:hover {
+  background: transparent; /* Remove background on hover */
+}
+.hamburger-menu .bar {
+  width: 100%;
+  height: 3px;
+  background-color: #333; /* Black color for the bars */
+  border-radius: 2px;
+}
