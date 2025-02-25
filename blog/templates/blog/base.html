@@ -97,6 +97,21 @@
                             </a>
                         </li>
                         {% endif %}
+                        <!-- Courses Dropdown -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-toggle="collapse" href="#coursesMenu" role="button" aria-expanded="false" aria-controls="coursesMenu">
+                                Courses
+                            </a>
+                            <div class="collapse" id="coursesMenu">
+                                <ul class="nav flex-column ml-3">
+                                    {% for course in courses %}
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#">{{ course.name }}</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </nav>

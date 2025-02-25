@@ -8,10 +8,11 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
-from .models import Post
+from .models import Post, Course
 
 def home(request):
-    return render(request, 'blog/home.html', {'title': 'Home'})
+    courses = Course.objects.all()
+    return render(request, 'blog/home.html', {'title': 'Home', 'courses': courses})
 
 class PostListView(ListView):
     model = Post
