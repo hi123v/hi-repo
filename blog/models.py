@@ -23,3 +23,23 @@ class Course(models.Model):
 
     def get_absolute_url(self):
         return reverse('course-detail', kwargs={'pk': self.pk})
+
+class Lesson(models.Model):
+    course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('lesson-detail', kwargs={'pk': self.pk})
+
+class Task(models.Model):
+    lesson = models.ForeignKey(Lesson, related_name='tasks', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('task-detail', kwargs={'pk': self.pk})

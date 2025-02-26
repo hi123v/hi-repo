@@ -11,7 +11,7 @@ from django.views.generic import (
 from .models import Post, Course
 
 def home(request):
-    courses = Course.objects.all()
+    courses = Course.objects.prefetch_related('lessons__tasks').all()
     return render(request, 'blog/home.html', {'title': 'Home', 'courses': courses})
 
 class PostListView(ListView):

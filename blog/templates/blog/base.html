@@ -106,7 +106,29 @@
                                 <ul class="nav flex-column ml-3">
                                     {% for course in courses %}
                                     <li class="nav-item">
-                                        <a class="nav-link" href="#">{{ course.name }}</a>
+                                        <a class="nav-link" data-toggle="collapse" href="#course{{ course.id }}" role="button" aria-expanded="false" aria-controls="course{{ course.id }}">
+                                            {{ course.name }}
+                                        </a>
+                                        <div class="collapse" id="course{{ course.id }}">
+                                            <ul class="nav flex-column ml-3">
+                                                {% for lesson in course.lessons.all %}
+                                                <li class="nav-item">
+                                                    <a class="nav-link" data-toggle="collapse" href="#lesson{{ lesson.id }}" role="button" aria-expanded="false" aria-controls="lesson{{ lesson.id }}">
+                                                        {{ lesson.name }}
+                                                    </a>
+                                                    <div class="collapse" id="lesson{{ lesson.id }}">
+                                                        <ul class="nav flex-column ml-3">
+                                                            {% for task in lesson.tasks.all %}
+                                                            <li class="nav-item">
+                                                                <a class="nav-link" href="#">{{ task.name }}</a>
+                                                            </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
                                     </li>
                                     {% endfor %}
                                 </ul>
