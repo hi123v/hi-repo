@@ -1,4 +1,25 @@
 {% extends "blog/base.html" %}
 {% block content %}
-    <h1>Hello, this is the home page</h1>
-{% endblock content %}
+    <div class="container">
+        <h1 class="mt-4">Courses</h1>
+        {% for course in courses %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>{{ course.name }}</h2>
+                </div>
+                <div class="card-body">
+                    {% for lesson in course.lessons.all %}
+                        <div class="lesson-section mb-4">
+                            <h3>{{ lesson.name }}</h3>
+                            <div class="task-buttons">
+                                {% for task in lesson.tasks.all %}
+                                    <a href="{{ task.get_absolute_url }}" class="btn btn-primary task-button">{{ task.name }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

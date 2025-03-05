@@ -128,3 +128,19 @@ a.article-title:hover {
   background-color: #333; /* Black color for the bars */
   border-radius: 2px;
 }
+.lesson-section {
+  border-left: 4px solid #007bff;
+  padding-left: 15px;
+  margin-bottom: 20px;
+}
+
+.task-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.task-button {
+  flex: 1 1 auto;
+  text-align: center;
+}

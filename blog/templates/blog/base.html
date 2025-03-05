@@ -120,7 +120,7 @@
                                                         <ul class="nav flex-column ml-3">
                                                             {% for task in lesson.tasks.all %}
                                                             <li class="nav-item">
-                                                                <a class="nav-link" href="#">{{ task.name }}</a>
+                                                                <a class="nav-link" href="{{ task.get_absolute_url }}">{{ task.name }}</a>
                                                             </li>
                                                             {% endfor %}
                                                         </ul>
