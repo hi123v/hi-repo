@@ -2,7 +2,10 @@
 {% load crispy_forms_tags %}
 {% block content %}
     <div class="content-section">
-        <form method="POST">
+        <button id="studentButton" class="btn btn-primary mb-4">Student</button>
+        <button id="teacherButton" class="btn btn-secondary mb-4">Teacher</button>
+        <button id="parentButton" class="btn btn-info mb-4">Parent</button>
+        <form id="loginForm" method="POST" style="display: none;">
             {% csrf_token %}
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Log In</legend>
