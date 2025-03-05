@@ -136,7 +136,7 @@ a.article-title:hover {
 
 .task-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column; /* Stack buttons vertically */
   gap: 10px;
 }
 
