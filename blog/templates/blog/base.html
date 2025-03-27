@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -34,7 +35,10 @@
                 <div class="collapse navbar-collapse" id="navbarToggle">
                     <div class="navbar-nav mr-auto">
                         <a class="nav-item nav-link" href="{% url 'home' %}">Home</a>
-                        <a class="nav-item nav-link" href="{% url 'chat' %}">Chat</a>
+                        {% if user|is_not_student %}
+                            <a class="nav-item nav-link" href="{% url 'chat' %}">Chat</a>
+                        {% endif %}
+                        <a class="nav-item nav-link" href="{% url 'blog-about' %}">About</a>
                     </div>
                     <!-- Navbar Right Side -->
                     <div class="navbar-nav">
@@ -59,11 +63,13 @@
                                 Home
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'chat' %}">
-                                Chat
-                            </a>
-                        </li>
+                        {% if user|is_not_student %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'chat' %}">
+                                    Chat
+                                </a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'blog-about' %}">
                                 About

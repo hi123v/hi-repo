@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from .models import Task, Course
@@ -69,6 +70,14 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if self.request.user == post.author:
             return True
         return False
+    
+def is_not_student(user):
+    return not user.groups.filter(name='Student').exists()
+
+@login_required
+@user_passes_test(is_not_student)
+def chat(request):
+    return render(request, 'blog/chat.html', {'title': 'Chat'})
 
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
