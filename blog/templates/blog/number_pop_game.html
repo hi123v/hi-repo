@@ -1,0 +1,77 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<style>
+.cloud-bg {
+    background: linear-gradient(180deg, #aee7ff 0%, #6ec6f7 100%);
+    border-radius: 40px;
+    padding: 30px 20px 40px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    box-shadow: 0 8px 32px 0 rgba(110,198,247,0.2);
+    margin-bottom: 20px;
+    min-height: 120px;
+    position: relative;
+}
+.cloud-number-btn {
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+    font-size: 2em;
+    color: #2196f3;
+    font-weight: bold;
+    box-shadow: 0 4px 16px 0 rgba(33,150,243,0.15);
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+    outline: none;
+}
+.cloud-number-btn:hover {
+    background: #e3f2fd;
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 8px 24px 0 rgba(33,150,243,0.25);
+}
+</style>
+<div class="content-section">
+    <h2>Number Pop Game</h2>
+    <p>Listen to the number and click the correct button!</p>
+    <button id="play-audio" class="btn btn-primary mb-3">Play Number</button>
+    <div id="number-cloud" class="cloud-bg mb-3">
+        <button class="cloud-number-btn" data-number="1">1</button>
+        <button class="cloud-number-btn" data-number="2">2</button>
+        <button class="cloud-number-btn" data-number="3">3</button>
+        <button class="cloud-number-btn" data-number="4">4</button>
+        <button class="cloud-number-btn" data-number="5">5</button>
+        <button class="cloud-number-btn" data-number="6">6</button>
+        <button class="cloud-number-btn" data-number="7">7</button>
+        <button class="cloud-number-btn" data-number="8">8</button>
+        <button class="cloud-number-btn" data-number="9">9</button>
+        <button class="cloud-number-btn" data-number="10">10</button>
+    </div>
+    <div id="feedback"></div>
+    <a href="{% url 'task-detail' task_id=1 %}" id="next-task" class="btn btn-success mt-3" style="display:none;">Next: Drag and Drop</a>
+</div>
+<script>
+    let currentNumber = null;
+    function playNumber() {
+        currentNumber = Math.floor(Math.random() * 10) + 1;
+        const utter = new SpeechSynthesisUtterance(currentNumber.toString());
+        window.speechSynthesis.speak(utter);
+    }
+    document.getElementById('play-audio').onclick = playNumber;
+    document.querySelectorAll('.cloud-number-btn').forEach(btn => {
+        btn.onclick = function() {
+            if (parseInt(this.dataset.number) === currentNumber) {
+                document.getElementById('feedback').textContent = "Correct! You may continue.";
+                document.getElementById('next-task').style.display = "inline-block";
+            } else {
+                document.getElementById('feedback').textContent = "Try again!";
+            }
+        }
+    });
+</script>
+{% endblock %}

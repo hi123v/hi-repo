@@ -48,7 +48,7 @@ urlpatterns = [
             ),
         name='password_reset_complete'),
     path('blog/', include('blog.urls')),
-    path('', include('blog.urls')),  # Ensure this points to the blog.urls
+    path('', include('blog.urls')),
 ]
 
 if settings.DEBUG:

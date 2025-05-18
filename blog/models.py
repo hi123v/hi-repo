@@ -30,7 +30,7 @@ class Task(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('task-detail', kwargs={'pk': self.pk})
+        return reverse('task-detail', kwargs={'task_id': self.pk})
 
 class Post(models.Model):
     title = models.CharField(max_length=100)

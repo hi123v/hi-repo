@@ -38,6 +38,8 @@ class PostDetailView(DetailView):
 
 class TaskDetailView(DetailView):
     model = Task
+    template_name = 'blog/task_detail.html' 
+    context_object_name = 'task'  
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -81,3 +83,20 @@ def chat(request):
 
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
+
+def task_detail(request, task_id):
+    # Determine the range of numbers based on the task ID
+    if task_id == 1:  # Task 1: Numbers 1-10
+        numbers = range(1, 11)
+    elif task_id == 2:  # Task 2: Numbers 11-20
+        numbers = range(11, 21)
+    else:
+        numbers = []  # Default to an empty list if the task ID is invalid
+
+    return render(request, 'blog/task_detail.html', {'numbers': numbers, 'task_id': task_id})
+
+def games(request):
+    return render(request, 'blog/games.html', {'title': 'Games'})
+
+def number_pop_game(request):
+    return render(request, 'blog/number_pop_game.html')
