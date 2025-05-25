@@ -2,72 +2,119 @@
 
 {% block content %}
 <style>
-.cloud-bg {
-    background: linear-gradient(180deg, #aee7ff 0%, #6ec6f7 100%);
+.number-pop-bg {
+    background: linear-gradient(180deg, #6ec6f7 0%, #2196f3 100%);
     border-radius: 40px;
-    padding: 30px 20px 40px 20px;
+    padding: 40px 20px 40px 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px 0 rgba(33,150,243,0.15);
+}
+.cloud-bg {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: flex-end;
-    box-shadow: 0 8px 32px 0 rgba(110,198,247,0.2);
-    margin-bottom: 20px;
     min-height: 120px;
     position: relative;
 }
 .cloud-number-btn {
     background: #fff;
     border: none;
-    border-radius: 50%;
-    width: 60px;
+    border-radius: 50% 50% 60% 40% / 60% 40% 50% 50%;
+    width: 70px;
     height: 60px;
-    margin: 10px;
+    margin: 12px;
     font-size: 2em;
     color: #2196f3;
     font-weight: bold;
-    box-shadow: 0 4px 16px 0 rgba(33,150,243,0.15);
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 8px 24px 0 rgba(33,150,243,0.18), 0 2px 8px 0 #b3e5fc;
+    transition: transform 0.15s, box-shadow 0.15s;
     cursor: pointer;
     outline: none;
+    position: relative;
 }
 .cloud-number-btn:hover {
     background: #e3f2fd;
-    transform: scale(1.1) rotate(-5deg);
-    box-shadow: 0 8px 24px 0 rgba(33,150,243,0.25);
+    transform: scale(1.12) rotate(-6deg);
+    box-shadow: 0 12px 32px 0 rgba(33,150,243,0.25);
+}
+#play-audio {
+    display: inline-block;
+    font-size: 1.5em;
+    background: #fff;
+    color: #2196f3;
+    border: none;
+    width: 180px;
+    height: 60px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 16px 0 rgba(33,150,243,0.12);
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+    cursor: pointer;
+    clip-path: polygon(
+        0% 30%, 10% 40%, 20% 30%, 30% 40%, 40% 30%, 50% 40%,
+        60% 30%, 70% 40%, 80% 30%, 90% 40%, 100% 30%,
+        100% 70%, 90% 60%, 80% 70%, 70% 60%, 60% 70%, 50% 60%,
+        40% 70%, 30% 60%, 20% 70%, 10% 60%, 0% 70%
+    );
+}
+#play-audio:hover {
+    background: #e3f2fd;
+    color: #1565c0;
+    transform: scale(1.07) rotate(-2deg);
 }
 </style>
-<div class="content-section">
-    <h2>Number Pop Game</h2>
-    <p>Listen to the number and click the correct button!</p>
-    <button id="play-audio" class="btn btn-primary mb-3">Play Number</button>
-    <div id="number-cloud" class="cloud-bg mb-3">
-        <button class="cloud-number-btn" data-number="1">1</button>
-        <button class="cloud-number-btn" data-number="2">2</button>
-        <button class="cloud-number-btn" data-number="3">3</button>
-        <button class="cloud-number-btn" data-number="4">4</button>
-        <button class="cloud-number-btn" data-number="5">5</button>
-        <button class="cloud-number-btn" data-number="6">6</button>
-        <button class="cloud-number-btn" data-number="7">7</button>
-        <button class="cloud-number-btn" data-number="8">8</button>
-        <button class="cloud-number-btn" data-number="9">9</button>
-        <button class="cloud-number-btn" data-number="10">10</button>
+<div class="number-pop-bg">
+    <div class="content-section">
+        <h2 style="color:#fff;">Number Pop Game</h2>
+        <p style="color:#e3f2fd;">Listen to the number and click the correct button!</p>
+        <button id="play-audio">☁️ Play Number</button>
+        <div id="number-cloud" class="cloud-bg mb-3">
+            <button class="cloud-number-btn" data-number="1">1</button>
+            <button class="cloud-number-btn" data-number="2">2</button>
+            <button class="cloud-number-btn" data-number="3">3</button>
+            <button class="cloud-number-btn" data-number="4">4</button>
+            <button class="cloud-number-btn" data-number="5">5</button>
+            <button class="cloud-number-btn" data-number="6">6</button>
+            <button class="cloud-number-btn" data-number="7">7</button>
+            <button class="cloud-number-btn" data-number="8">8</button>
+            <button class="cloud-number-btn" data-number="9">9</button>
+            <button class="cloud-number-btn" data-number="10">10</button>
+        </div>
+        <div id="feedback" style="color:#fff;font-weight:bold;"></div>
+        <a href="{% url 'task-detail' task_id=1 %}" id="next-task" class="btn btn-success mt-3" style="display:none;">Next: Drag and Drop</a>
     </div>
-    <div id="feedback"></div>
-    <a href="{% url 'task-detail' task_id=1 %}" id="next-task" class="btn btn-success mt-3" style="display:none;">Next: Drag and Drop</a>
 </div>
 <script>
     let currentNumber = null;
+    // Disable all number buttons initially
+    document.querySelectorAll('.cloud-number-btn').forEach(btn => {
+        btn.disabled = true;
+    });
+
     function playNumber() {
         currentNumber = Math.floor(Math.random() * 10) + 1;
         const utter = new SpeechSynthesisUtterance(currentNumber.toString());
         window.speechSynthesis.speak(utter);
+        // Enable buttons after playing
+        document.querySelectorAll('.cloud-number-btn').forEach(btn => {
+            btn.disabled = false;
+        });
+        document.getElementById('feedback').textContent = "";
+        document.getElementById('next-task').style.display = "none";
     }
+
     document.getElementById('play-audio').onclick = playNumber;
+
     document.querySelectorAll('.cloud-number-btn').forEach(btn => {
         btn.onclick = function() {
+            if (currentNumber === null) {
+                document.getElementById('feedback').textContent = "Click 'Play Number' first!";
+                return;
+            }
             if (parseInt(this.dataset.number) === currentNumber) {
                 document.getElementById('feedback').textContent = "Correct! You may continue.";
                 document.getElementById('next-task').style.display = "inline-block";
+                document.querySelectorAll('.cloud-number-btn').forEach(b => b.disabled = true);
             } else {
                 document.getElementById('feedback').textContent = "Try again!";
             }

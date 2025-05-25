@@ -2,24 +2,14 @@
 {% block content %}
     <div class="container">
         <h1 class="mt-4">Courses</h1>
-        {% for course in courses %}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2>{{ course.name }}</h2>
+        <div class="row">
+            {% for course in courses|slice:":2" %}
+                <div class="col-md-6 mb-4">
+                    <a href="{% url 'course-detail' course.id %}" class="btn btn-lg btn-primary btn-block">
+                        {{ course.name }}
+                    </a>
                 </div>
-                <div class="card-body">
-                    {% for lesson in course.lessons.all %}
-                        <div class="lesson-section mb-4">
-                            <h3>{{ lesson.name }}</h3>
-                            <div class="task-buttons">
-                                {% for task in lesson.tasks.all %}
-                                    <a href="{{ task.get_absolute_url }}" class="btn btn-primary task-button">{{ task.name }}</a>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}

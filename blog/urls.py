@@ -24,5 +24,7 @@ urlpatterns = [
     path('task/<int:task_id>/', task_detail, name='task-detail'),  
     path('about/', views.about, name='blog-about'),
     path('games/', games, name='games'),
-     path('games/number-pop/', number_pop_game, name='number-pop-game'),
+    path('games/number-pop/', number_pop_game, name='number-pop-game'),
+    path('newsletter-signup/', views.newsletter_signup, name='newsletter-signup'),
+    path('course/<int:course_id>/', views.course_detail, name='course-detail'),
 ]

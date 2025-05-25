@@ -147,6 +147,18 @@
                             </div>
                         </li>
                     </ul>
+                    <hr>
+                    <h5>Subscribe to our Newsletter</h5>
+                    <form method="post" action="{% url 'newsletter-signup' %}" class="newsletter-form mt-2 mb-2">
+                        {% csrf_token %}
+                        <input type="email" name="email" class="form-control mb-2" placeholder="Your email for updates" required>
+                        <button type="submit" class="btn btn-primary btn-block">Subscribe</button>
+                    </form>
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info mt-2">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </nav>
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
@@ -171,6 +183,7 @@
                                 <li class="list-group-item list-group-item-light">Calendars</li>
                                 <li class="list-group-item list-group-item-light">etc</li>
                             </ul>
+                            <!-- Newsletter form removed from here -->
                         </div>
                     </div>
                 </div>

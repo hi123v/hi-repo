@@ -1,8 +1,12 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from .models import Task, Course
+from .models import NewsletterSubscriber
+from django.core.mail import send_mail
+from django.conf import settings
 from django.views.generic import (
     ListView, 
     DetailView, 
@@ -100,3 +104,27 @@ def games(request):
 
 def number_pop_game(request):
     return render(request, 'blog/number_pop_game.html')
+
+def newsletter_signup(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        if email:
+            if NewsletterSubscriber.objects.filter(email=email).exists():
+                messages.info(request, "You're already subscribed!")
+            else:
+                NewsletterSubscriber.objects.create(email=email)
+                # Send welcome email
+                send_mail(
+                    "Welcome to the Quest-ly's Newsletter!",
+                    "Thanks for subscribing! You'll now get updates about all the cool stuff on the app.",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=True,
+                )
+                messages.success(request, "Thanks for subscribing! Check your email for a welcome message.")
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+def course_detail(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    lessons = course.lessons.all()
+    return render(request, 'blog/course_detail.html', {'course': course, 'lessons': lessons})
