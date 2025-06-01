@@ -5,11 +5,31 @@
         <div class="row">
             {% for course in courses|slice:":2" %}
                 <div class="col-md-6 mb-4">
-                    <a href="{% url 'course-detail' course.id %}" class="btn btn-lg btn-primary btn-block">
-                        {{ course.name }}
+                    <a href="{% url 'course-detail' course.id %}" class="course-btn btn btn-lg btn-primary btn-block d-flex flex-column align-items-center justify-content-center">
+                        <span class="mb-2">{{ course.name }}</span>
+                        <div class="course-placeholder"></div>
                     </a>
                 </div>
             {% endfor %}
         </div>
     </div>
+   <style>
+    .course-btn {
+        min-height: 140px;
+        padding: 16px 24px;
+        font-size: 1.5em;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .course-placeholder {
+        width: 450px;      /* Increased width */
+        height: 300px;
+        background: #e9ecef;
+        border-radius: 12px;
+        margin-top: 8px;
+        display: block;
+    }
+    </style>
 {% endblock %}

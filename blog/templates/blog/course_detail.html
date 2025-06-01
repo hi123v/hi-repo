@@ -3,66 +3,90 @@
 <div class="container">
     <h2 class="mt-4 mb-4">{{ course.name }}</h2>
     {% if lessons %}
-        <div class="accordion" id="lessonsAccordion">
-            {% for lesson in lessons %}
-                <div class="card mb-3">
-                    <div class="card-header" id="heading{{ lesson.id }}">
-                        <h5 class="mb-0">
-                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse{{ lesson.id }}" aria-expanded="true" aria-controls="collapse{{ lesson.id }}">
-                                {{ lesson.name }}
-                            </button>
-                        </h5>
+        <div class="card mb-3" style="background: #f8f9fa; border-radius: 10px; border: 1px solid #e0e0e0;">
+            <div class="card-body">
+                {% for lesson in lessons %}
+                    <div class="lesson-section py-3">
+                        <h5 class="mb-3 text-center">{{ lesson.name }}</h5>
+                        {% if lesson.tasks.all %}
+                            <ul class="list-group task-list-vertical d-flex flex-column align-items-center">
+                                {% for task in lesson.tasks.all %}
+                                    <li class="list-group-item border-0 bg-transparent position-relative">
+                                        <a href="{% url 'task-detail' task.id %}" class="task-circle-btn d-flex align-items-center justify-content-center">
+                                            {% if task.name == "Addition" %}
+                                                ➕
+                                            {% elif task.name == "Subtraction" %}
+                                                ➖
+                                            {% elif task.name == "Multiplication" %}
+                                                ✖️
+                                            {% elif task.name == "Division" %}
+                                                ➗
+                                            {% else %}
+                                                <span class="star-symbol">&#9733;</span>
+                                            {% endif %}
+                                        </a>
+                                        {% if not forloop.last %}
+                                            <span class="vertical-line"></span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted text-center">No tasks for this lesson yet.</p>
+                        {% endif %}
                     </div>
-                    <div id="collapse{{ lesson.id }}" class="collapse" aria-labelledby="heading{{ lesson.id }}" data-parent="#lessonsAccordion">
-                        <div class="card-body">
-                            {% if lesson.tasks.all %}
-                                <ul class="list-group">
-                                    {% for task in lesson.tasks.all %}
-                                        <li class="list-group-item">
-                                            <a href="{% url 'task-detail' task.id %}" class="task-link">
-                                                {% if task.name == "Addition" %}
-                                                    ➕ Addition
-                                                {% elif task.name == "Subtraction" %}
-                                                    ➖ Subtraction
-                                                {% elif task.name == "Multiplication" %}
-                                                    ✖️ Multiplication
-                                                {% elif task.name == "Division" %}
-                                                    ➗ Division
-                                                {% else %}
-                                                    {{ task.name }}
-                                                {% endif %}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-muted">No tasks for this lesson yet.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     {% else %}
         <p class="text-muted">No lessons found for this course.</p>
     {% endif %}
 </div>
 <style>
-    .task-link {
+    .task-circle-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #007bff;
+        color: #fff;
+        font-size: 2em;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, color 0.2s;
         text-decoration: none;
-        color: #007bff;
-        font-weight: 500;
-    }
-    .task-link:hover {
-        text-decoration: underline;
-        color: #0056b3;
-    }
-    .card-header {
-        background: #f8f9fa;
-    }
-    .card {
-        border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        z-index: 1;
+    }
+    .task-circle-btn:hover {
+        background: #0056b3;
+        text-decoration: none;
+    }
+    .star-symbol {
+        font-size: 1.5em;
+        color: #fff;
+        line-height: 1;
+    }
+    .task-list-vertical .list-group-item {
+        background: transparent;
+        padding: 0;
+        border: none;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 0;
+    }
+    .vertical-line {
+        display: block;
+        width: 4px;
+        height: 40px;           /* Tweak this value! Try 28px-36px for best fit */
+        background: #007bff;
+        margin-top: -4px;       /* Slightly overlap with the button above */
+        margin-bottom: -4px;    /* Slightly overlap with the button below */
+        border-radius: 2px;
+        z-index: 0;
     }
 </style>
 {% endblock %}
