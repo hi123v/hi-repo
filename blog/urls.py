@@ -9,7 +9,7 @@ from .views import (
     PostUpdateView,
     PostDeleteView,
     UserPostListView,
-    task_detail
+    task_detail,
 )
 from . import views
 

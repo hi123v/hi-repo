@@ -7,6 +7,8 @@
         <button id="parentButton" class="btn btn-info mb-4">Parent</button>
         <form id="loginForm" method="POST" style="display: none;">
             {% csrf_token %}
+            <!-- Step 1: Hidden user_type field -->
+            <input type="hidden" name="user_type" id="userTypeInput" value="">
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Log In</legend>
                 {{ form|crispy }}
@@ -24,4 +26,19 @@
             </small>
         </div>
     </div>
+    <!-- Step 2: JavaScript to set user_type and show form -->
+    <script>
+        document.getElementById('studentButton').onclick = function() {
+            document.getElementById('userTypeInput').value = 'student';
+            document.getElementById('loginForm').style.display = 'block';
+        };
+        document.getElementById('teacherButton').onclick = function() {
+            document.getElementById('userTypeInput').value = 'teacher';
+            document.getElementById('loginForm').style.display = 'block';
+        };
+        document.getElementById('parentButton').onclick = function() {
+            document.getElementById('userTypeInput').value = 'parent';
+            document.getElementById('loginForm').style.display = 'block';
+        };
+    </script>
 {% endblock content %}

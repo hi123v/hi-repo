@@ -18,7 +18,14 @@ from .models import Post, Course
 
 def home(request):
     courses = Course.objects.prefetch_related('lessons__tasks').all()
-    return render(request, 'blog/home.html', {'title': 'Home', 'courses': courses})
+    user_type = None
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        user_type = request.user.profile.user_type
+    return render(request, 'blog/home.html', {
+        'title': 'Home',
+        'courses': courses,
+        'user_type': user_type
+    })
 
 class PostListView(ListView):
     model = Post

@@ -190,4 +190,33 @@
         };
     });
     </script>
+</div>
+    </div>
+</div>
+<style>
+    .full-width-card-container {
+        width: 100vw;
+        min-height: calc(100vh - 56px); /* Adjust 56px if your navbar is taller */
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        padding: 0;
+        background: #f8f9fa;
+        position: relative;
+        z-index: 0;
+    }
+    .full-width-card {
+        width: 100%;
+        min-height: calc(100vh - 56px);
+        border-radius: 0;
+        border: none;
+        background: #f8f9fa;
+        box-shadow: none;
+        padding: 32px 0;
+    }
+    @media (max-width: 768px) {
+        .full-width-card, .full-width-card-container {
+            padding: 0;
+        }
+    }
+</style>
 {% endblock %}

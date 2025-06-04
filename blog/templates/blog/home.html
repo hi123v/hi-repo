@@ -1,5 +1,14 @@
 {% extends "blog/base.html" %}
 {% block content %}
+    {% if user_type == 'student' %}
+        <h2>Welcome, Student!</h2>
+    {% elif user_type == 'parent' %}
+        <h2>Welcome, Parent!</h2>
+    {% elif user_type == 'teacher' %}
+        <h2>Welcome, Teacher!</h2>
+    {% else %}
+        <h2>Welcome!</h2>
+    {% endif %}
     <div class="container">
         <h1 class="mt-4">Courses</h1>
         <div class="row">

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.contrib.auth.views import LoginView
 
 
 def register(request):
@@ -40,5 +41,14 @@ def profile(request):
     }
 
     return render(request, 'users/profile.html', context)
+
+class CustomLoginView(LoginView):
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user_type = self.request.POST.get('user_type')
+        if user_type and hasattr(self.request.user, 'profile'):
+            self.request.user.profile.user_type = user_type
+            self.request.user.profile.save()
+        return response
 
  
