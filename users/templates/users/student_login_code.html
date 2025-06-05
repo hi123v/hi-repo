@@ -1,0 +1,10 @@
+{% extends "blog/base.html" %}
+{% block content %}
+<h2>Enter the 4-digit code sent to your parent</h2>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="post">
+    {% csrf_token %}
+    <input type="text" name="code" maxlength="4" required>
+    <button type="submit" class="btn btn-success">Verify & Login</button>
+</form>
+{% endblock %}

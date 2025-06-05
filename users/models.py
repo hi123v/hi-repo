@@ -22,3 +22,9 @@ class Profile(models.Model):
             output_size = (300, 300)
             img.thumbnail(output_size)
             img.save(self.image.path)
+
+class StudentLoginCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    parent_email = models.EmailField()
+    code = models.CharField(max_length=4)
+    created_at = models.DateTimeField(auto_now_add=True)

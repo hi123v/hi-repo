@@ -50,6 +50,7 @@ urlpatterns = [
         name='password_reset_complete'),
     path('blog/', include('blog.urls')),
     path('', include('blog.urls')),
+    path('student-login/', user_views.student_login, name='student-login'),
 ]
 
 if settings.DEBUG:

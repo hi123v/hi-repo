@@ -66,48 +66,35 @@
                         </li>
                         {% if user|is_not_student %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'chat' %}">
-                                    Chat
-                                </a>
+                                <a class="nav-link" href="{% url 'chat' %}">Chat</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'blog-about' %}">
-                                About
-                            </a>
+                            <a class="nav-link" href="{% url 'blog-about' %}">About</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'games' %}"> <!-- Added Games link -->
-                                Games
-                            </a>
+                            <a class="nav-link" href="{% url 'games' %}">Games</a>
                         </li>
                         {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'post-create' %}">
-                                New Post
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'profile' %}">
-                                Profile
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}">
-                                Logout
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'post-create' %}">New Post</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                            </li>
                         {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
-                                Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">
-                                Register
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'register' %}">Register</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'student-login' %}">Student Login</a>
+                            </li>
                         {% endif %}
                         <!-- Courses Dropdown -->
                         <li class="nav-item">

@@ -1,44 +1,45 @@
 {% extends "blog/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-    <div class="content-section">
-        <button id="studentButton" class="btn btn-primary mb-4">Student</button>
-        <button id="teacherButton" class="btn btn-secondary mb-4">Teacher</button>
-        <button id="parentButton" class="btn btn-info mb-4">Parent</button>
-        <form id="loginForm" method="POST" style="display: none;">
-            {% csrf_token %}
-            <!-- Step 1: Hidden user_type field -->
-            <input type="hidden" name="user_type" id="userTypeInput" value="">
-            <fieldset class="form-group">
-                <legend class="border-bottom mb-4">Log In</legend>
-                {{ form|crispy }}
-            </fieldset>
-            <div class="form-group">
-                <button class="btn btn-outline-info" type="submit">Login</button>
-                <small class="text-muted ml-2">
-                    <a href="{% url 'password_reset' %}">Forgot Password?</a>
-                </small>
+<div class="content-section">
+    <div class="mb-4">
+        <button id="teacherButton" class="btn btn-secondary">Teacher</button>
+        <button id="parentButton" class="btn btn-info">Parent</button>
+        <a href="{% url 'student-login' %}" class="btn btn-primary">Student</a>
+    </div>
+    <form id="loginForm" method="POST" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="user_type" id="userTypeInput" value="">
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Log In</legend>
+            <div id="usernameField">
+                {{ form.username|as_crispy_field }}
             </div>
-        </form>
-        <div class="border-top pt-3">
-            <small class="text-muted">
-                Need An Account? <a class="ml-2" href="{% url 'register' %}">Sign Up Now</a>
+            <div id="passwordField">
+                {{ form.password|as_crispy_field }}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            <button class="btn btn-outline-info" type="submit">Login</button>
+            <small class="text-muted ml-2">
+                <a href="{% url 'password_reset' %}">Forgot Password?</a>
             </small>
         </div>
+    </form>
+    <div class="border-top pt-3">
+        <small class="text-muted">
+            Need An Account? <a class="ml-2" href="{% url 'register' %}">Sign Up Now</a>
+        </small>
     </div>
-    <!-- Step 2: JavaScript to set user_type and show form -->
-    <script>
-        document.getElementById('studentButton').onclick = function() {
-            document.getElementById('userTypeInput').value = 'student';
-            document.getElementById('loginForm').style.display = 'block';
-        };
-        document.getElementById('teacherButton').onclick = function() {
-            document.getElementById('userTypeInput').value = 'teacher';
-            document.getElementById('loginForm').style.display = 'block';
-        };
-        document.getElementById('parentButton').onclick = function() {
-            document.getElementById('userTypeInput').value = 'parent';
-            document.getElementById('loginForm').style.display = 'block';
-        };
-    </script>
+</div>
+<script>
+    document.getElementById('teacherButton').onclick = function() {
+        document.getElementById('userTypeInput').value = 'teacher';
+        document.getElementById('loginForm').style.display = 'block';
+    };
+    document.getElementById('parentButton').onclick = function() {
+        document.getElementById('userTypeInput').value = 'parent';
+        document.getElementById('loginForm').style.display = 'block';
+    };
+</script>
 {% endblock content %}
