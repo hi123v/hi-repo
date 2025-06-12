@@ -1,0 +1,13 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Login</h1>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="user_type" value="{{ request.GET.user_type }}">
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+</div>
+{% endblock content %}

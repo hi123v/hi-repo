@@ -6,6 +6,7 @@ from .models import StudentLoginCode, Profile
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 
 
 def register(request):
@@ -45,10 +46,18 @@ def profile(request):
 
     return render(request, 'users/profile.html', context)
 
+from django.shortcuts import redirect
+
 class CustomLoginView(LoginView):
+    def dispatch(self, request, *args, **kwargs):
+        # If no user_type in GET, redirect to choose-login
+        if not request.GET.get('user_type'):
+            return redirect('choose-login')
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         response = super().form_valid(form)
-        user_type = self.request.POST.get('user_type')
+        user_type = self.request.POST.get('user_type') or self.request.GET.get('user_type')
         if user_type and hasattr(self.request.user, 'profile'):
             self.request.user.profile.user_type = user_type
             self.request.user.profile.save()
@@ -62,6 +71,10 @@ def student_login(request):
             if code and len(code) == 4 and code.isdigit():
                 username = request.session.get('student_username')
                 user = User.objects.get(username=username)
+                # Set user_type to "student" on the profile
+                if hasattr(user, 'profile'):
+                    user.profile.user_type = 'student'
+                    user.profile.save()
                 login(request, user)
                 return redirect('home')
             else:
@@ -81,4 +94,5 @@ def student_login(request):
         form = StudentLoginForm()
     return render(request, 'users/student_login.html', {'form': form})
 
- 
+def choose_login(request):
+    return render(request, 'users/login.html')
