@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 
 class Course(models.Model):
     name = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='course_previews/', blank=True, null=True)
 
     def __str__(self):
         return self.name

@@ -15,6 +15,7 @@ from django.views.generic import (
     DeleteView
 )
 from .models import Post, Course
+import random
 
 def home(request):
     courses = Course.objects.prefetch_related('lessons__tasks').all()
@@ -135,3 +136,16 @@ def course_detail(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     lessons = course.lessons.all()
     return render(request, 'blog/course_detail.html', {'course': course, 'lessons': lessons})
+
+def home(request):
+    courses = Course.objects.prefetch_related('lessons__tasks').all()
+    user_type = None
+    random_score = random.randint(60, 100)  # or any range you want
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        user_type = request.user.profile.user_type
+    return render(request, 'blog/home.html', {
+        'title': 'Home',
+        'courses': courses,
+        'user_type': user_type,
+        'random_score': random_score
+    })

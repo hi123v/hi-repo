@@ -25,7 +25,7 @@ from users.views import CustomLoginView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('register/', user_views.register, name='register'),
-    path('profile/', user_views.profile, name='profile'),
+    path('profile/', user_views.Profile, name='profile'),
     path('choose-login/', user_views.choose_login, name='choose-login'),
     path('login/', CustomLoginView.as_view(template_name='users/login_form.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
@@ -52,6 +52,7 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     path('', include('blog.urls')),
     path('student-login/', user_views.student_login, name='student-login'),
+    path('placement-quiz/', user_views.placement_quiz, name='placement-quiz'),
 ]
 
 if settings.DEBUG:

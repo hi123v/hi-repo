@@ -11,6 +11,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     image = models.ImageField(default='default.jpg', upload_to='profile_pics')
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='student')
+    grade = models.CharField(max_length=20, blank=True, null=True)  # <-- Add this line
 
     def __str__(self):
         return f'{self.user.username} Profile'
@@ -28,3 +29,16 @@ class StudentLoginCode(models.Model):
     parent_email = models.EmailField()
     code = models.CharField(max_length=4)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class LoginRole(models.Model):
+    ROLE_CHOICES = [
+        ('teacher', 'Teacher'),
+        ('parent', 'Parent'),
+        ('student', 'Student'),
+    ]
+    name = models.CharField(max_length=20, choices=ROLE_CHOICES, unique=True)
+    image = models.ImageField(upload_to='login_roles/')
+    # Optionally add a description or other fields
+
+    def __str__(self):
+        return self.get_name_display()

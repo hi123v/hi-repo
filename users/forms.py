@@ -29,3 +29,17 @@ class StudentLoginForm(forms.Form):
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput)
     parent_email = forms.EmailField(label="Parent's Email")
+
+from django import forms
+
+class PlacementQuizForm(forms.Form):
+    question_1 = forms.ChoiceField(
+        choices=[('a', '2'), ('b', '4'), ('c', '6')],
+        widget=forms.RadioSelect,
+        label="What is 2 + 2?"
+    )
+    question_2 = forms.ChoiceField(
+        choices=[('a', 'Dog'), ('b', 'Cat'), ('c', 'Fish')],
+        widget=forms.RadioSelect,
+        label="Which is a mammal?"
+    )
