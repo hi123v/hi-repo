@@ -31,6 +31,15 @@
                                     </li>
                                 {% endfor %}
                             </ul>
+                            <div class="mt-4" style="background: #fffbe6; border-radius: 8px; padding: 16px;">
+                                <h5 class="mb-2 text-center">Simple Pattern</h5>
+                                <div style="font-size:2em; text-align:center;">
+                                    {% for num in random_pattern %}
+                                        <span style="margin-right: 0.5em;">{{ num }}</span>
+                                    {% endfor %}
+                                </div>
+                                <p class="mt-2 text-center">What comes next?</p>
+                            </div>
                         {% else %}
                             <p class="text-muted text-center">No tasks for this lesson yet.</p>
                         {% endif %}

@@ -135,7 +135,13 @@ def newsletter_signup(request):
 def course_detail(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     lessons = course.lessons.all()
-    return render(request, 'blog/course_detail.html', {'course': course, 'lessons': lessons})
+    # Generate a random pattern of 6 numbers between 1 and 20
+    random_pattern = [random.randint(1, 20) for _ in range(6)]
+    return render(request, 'blog/course_detail.html', {
+        'course': course,
+        'lessons': lessons,
+        'random_pattern': random_pattern,
+    })
 
 def home(request):
     courses = Course.objects.prefetch_related('lessons__tasks').all()

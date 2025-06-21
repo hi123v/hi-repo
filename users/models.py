@@ -10,8 +10,9 @@ class Profile(models.Model):
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     image = models.ImageField(default='default.jpg', upload_to='profile_pics')
+    sprite = models.ImageField(upload_to='sprites/', blank=True, null=True)  # <-- Move this line here
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='student')
-    grade = models.CharField(max_length=20, blank=True, null=True)  # <-- Add this line
+    grade = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.username} Profile'

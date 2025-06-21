@@ -45,6 +45,9 @@
                     <div class="navbar-nav">
                         {% if user.is_authenticated %}
                             <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
+                            {% if user.profile.user_type == 'teacher' %}
+                                <a class="nav-item nav-link btn btn-outline-primary ml-2" href="{% url 'membership' %}">Membership</a>
+                            {% endif %}
                         {% else %}
                             <a class="nav-item nav-link" href="{% url 'choose-login' %}">Login</a>
                             <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>

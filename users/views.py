@@ -1,13 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, StudentLoginForm, PlacementQuizForm
+from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, StudentLoginForm, PlacementQuizForm, TeacherLoginForm
 from .models import StudentLoginCode, Profile, LoginRole
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-
 
 def register(request):
     if request.method == 'POST':
@@ -21,24 +20,41 @@ def register(request):
         form = UserRegisterForm()
     return render(request, 'users/register.html', {'form': form})
 
-
 def student_login(request):
     if request.method == 'POST':
         form = StudentLoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
+            code = form.cleaned_data.get('code')
+            try:
+                login_code = StudentLoginCode.objects.get(code=code)
+                user = login_code.user
+            except StudentLoginCode.DoesNotExist:
+                user = None
+
             if user and hasattr(user, 'profile') and user.profile.user_type == 'student':
                 login(request, user)
-                if not user.profile.grade:
-                    return redirect('placement-quiz')
-                return redirect('home')
+                return redirect('placement-quiz')
             else:
-                ...
+                form.add_error(None, 'Invalid credentials.')
     else:
         form = StudentLoginForm()
     return render(request, 'users/student_login.html', {'form': form})
+
+def teacher_login(request):
+    if request.method == 'POST':
+        form = TeacherLoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user and hasattr(user, 'profile') and user.profile.user_type == 'teacher':
+                login(request, user)
+                return redirect('membership')
+            else:
+                form.add_error(None, 'Invalid credentials.')
+    else:
+        form = TeacherLoginForm()
+    return render(request, 'users/teacher_login.html', {'form': form})
 
 class CustomLoginView(LoginView):
     def dispatch(self, request, *args, **kwargs):
@@ -53,37 +69,6 @@ def form_valid(self, form):
         self.request.user.profile.user_type = user_type
         self.request.user.profile.save()
     return response
-
-def student_login(request):
-    if request.method == 'POST':
-        if 'code' in request.POST:
-            # Accept any 4-digit code for now
-            code = request.POST.get('code')
-            if code and len(code) == 4 and code.isdigit():
-                username = request.session.get('student_username')
-                user = User.objects.get(username=username)
-                # Set user_type to "student" on the profile
-                if hasattr(user, 'profile'):
-                    user.profile.user_type = 'student'
-                    user.profile.save()
-                login(request, user)
-                return redirect('home')
-            else:
-                return render(request, 'users/student_login_code.html', {'error': 'Invalid code'})
-        else:
-            form = StudentLoginForm(request.POST)
-            if form.is_valid():
-                username = form.cleaned_data['username']
-                password = form.cleaned_data['password']
-                user = authenticate(request, username=username, password=password)
-                if user:
-                    request.session['student_username'] = username
-                    return render(request, 'users/student_login_code.html')
-                else:
-                    form.add_error(None, 'Invalid credentials.')
-    else:
-        form = StudentLoginForm()
-    return render(request, 'users/student_login.html', {'form': form})
 
 def choose_login(request):
     roles = LoginRole.objects.all()
@@ -108,3 +93,7 @@ def placement_quiz(request):
     else:
         form = PlacementQuizForm()
     return render(request, 'users/placement_quiz.html', {'form': form})
+
+@login_required
+def membership(request):
+    return render(request, 'users/membership.html')

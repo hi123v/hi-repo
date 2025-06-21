@@ -43,3 +43,7 @@ class PlacementQuizForm(forms.Form):
         widget=forms.RadioSelect,
         label="Which is a mammal?"
     )
+
+class TeacherLoginForm(forms.Form):
+    username = forms.CharField(max_length=150)
+    password = forms.CharField(widget=forms.PasswordInput)

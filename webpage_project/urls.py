@@ -53,6 +53,7 @@ urlpatterns = [
     path('', include('blog.urls')),
     path('student-login/', user_views.student_login, name='student-login'),
     path('placement-quiz/', user_views.placement_quiz, name='placement-quiz'),
+    path('membership/', user_views.membership, name='membership'),
 ]
 
 if settings.DEBUG:

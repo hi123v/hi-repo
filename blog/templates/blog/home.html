@@ -29,31 +29,40 @@
         }
     </style>
     <div class="container">
-        <h1 class="mt-4">Courses</h1>
         <div class="row">
-            {% for course in courses|slice:":2" %}
-                <div class="col-md-6 mb-4">
-                    <a href="{% url 'course-detail' course.id %}" class="course-btn btn btn-lg btn-primary btn-block d-flex flex-column align-items-center justify-content-center">
-                        <span class="mb-2">{{ course.name }}</span>
-                        <div class="course-placeholder"></div>
-                    </a>
+            <!-- Courses Column -->
+            <div class="col-md-8">
+                <h1 class="mt-4">Courses</h1>
+                <div class="row">
+                    {% for course in courses|slice:":2" %}
+                        <div class="col-md-12 mb-4">
+                            <a href="{% url 'course-detail' course.id %}" class="course-btn btn btn-lg btn-primary btn-block d-flex flex-column align-items-center justify-content-center">
+                                <span class="mb-2">{{ course.name }}</span>
+                                <div class="course-placeholder"></div>
+                            </a>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="container mt-5">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h4 class="card-title mb-3">Your Info</h4>
-                <p><strong>Name:</strong> {{ request.user.get_full_name|default:request.user.username }}</p>
-                <p><strong>Grade:</strong> 
-                    {% if user_type %}
-                        {{ user_type|title }}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </p>
-                <p><strong>Score:</strong> {{ random_score }}</p>
+            </div>
+            <!-- Sprite and Info Column -->
+            <div class="col-md-4 d-flex flex-column align-items-center justify-content-start">
+                {% if request.user.profile.sprite %}
+                    <img src="{{ request.user.profile.sprite.url }}" alt="Sprite" style="height:120px; width:auto; margin-bottom:20px;">
+                {% endif %}
+                <div class="card shadow-sm w-100">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Your Info</h4>
+                        <p><strong>Name:</strong> {{ request.user.get_full_name|default:request.user.username }}</p>
+                        <p><strong>Grade:</strong> 
+                            {% if user_type %}
+                                {{ user_type|title }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                        <p><strong>Score:</strong> {{ random_score }}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
