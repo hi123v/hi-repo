@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-from .models import Task, Course
+from .models import Task, Course, CompletedTask
 from .models import NewsletterSubscriber
 from django.core.mail import send_mail
 from django.conf import settings
@@ -25,12 +25,13 @@ def home(request):
     return render(request, 'blog/home.html', {
         'title': 'Home',
         'courses': courses,
-        'user_type': user_type
+        'user_type': user_type,
+    
     })
 
 class PostListView(ListView):
     model = Post
-    template_name = 'blog/blog.html'  # Use the blog.html template for blog home
+    template_name = 'blog/blog.html'  
     context_object_name = 'posts'
     ordering = ['-date_posted']
     paginate_by = 5
@@ -135,23 +136,35 @@ def newsletter_signup(request):
 def course_detail(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     lessons = course.lessons.all()
-    # Generate a random pattern of 6 numbers between 1 and 20
     random_pattern = [random.randint(1, 20) for _ in range(6)]
+    completed_tasks = []
+    if request.user.is_authenticated:
+        completed_tasks = CompletedTask.objects.filter(user=request.user).values_list('task_id', flat=True)
     return render(request, 'blog/course_detail.html', {
         'course': course,
         'lessons': lessons,
         'random_pattern': random_pattern,
+        'completed_tasks': completed_tasks,
     })
 
-def home(request):
-    courses = Course.objects.prefetch_related('lessons__tasks').all()
-    user_type = None
-    random_score = random.randint(60, 100)  # or any range you want
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
-        user_type = request.user.profile.user_type
-    return render(request, 'blog/home.html', {
-        'title': 'Home',
-        'courses': courses,
-        'user_type': user_type,
-        'random_score': random_score
-    })
+@login_required
+def complete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    completed, created = CompletedTask.objects.get_or_create(user=request.user, task=task)
+    if created:
+        profile = request.user.profile
+        profile.points += 5
+        profile.save()
+    messages.success(request, f"You have completed the task: {task.name}")
+    return redirect('course-detail', course_id=task.lesson.course.id)
+
+@login_required
+def uncomplete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    deleted, _ = CompletedTask.objects.filter(user=request.user, task=task).delete()
+    if deleted:
+        profile = request.user.profile
+        profile.points = max(0, profile.points - 5)
+        profile.save()
+    messages.info(request, f"You have marked the task as not completed: {task.name}")
+    return redirect('course-detail', course_id=task.lesson.course.id)

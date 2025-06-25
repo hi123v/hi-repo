@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class Course(models.Model):
     name = models.CharField(max_length=100)
@@ -32,6 +33,17 @@ class Task(models.Model):
 
     def get_absolute_url(self):
         return reverse('task-detail', kwargs={'task_id': self.pk})
+    
+class CompletedTask(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    task = models.ForeignKey('Task', on_delete=models.CASCADE)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'task')
+
+    def __str__(self):
+        return f"{self.user.username} completed {self.task.name}"
 
 class Post(models.Model):
     title = models.CharField(max_length=100)
@@ -51,3 +63,12 @@ class NewsletterSubscriber(models.Model):
 
     def __str__(self):
         return self.email
+    
+class SubTask(models.Model):
+    task = models.ForeignKey(Task, related_name='subtasks', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+
+class CompletedSubTask(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    subtask = models.ForeignKey(SubTask, on_delete=models.CASCADE)
+    completed_at = models.DateTimeField(auto_now_add=True)

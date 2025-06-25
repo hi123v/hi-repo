@@ -9,36 +9,38 @@
                     <div class="lesson-section py-3">
                         <h5 class="mb-3 text-center">{{ lesson.name }}</h5>
                         {% if lesson.tasks.all %}
-                            <ul class="list-group task-list-vertical d-flex flex-column align-items-center">
-                                {% for task in lesson.tasks.all %}
-                                    <li class="list-group-item border-0 bg-transparent position-relative">
-                                        <a href="{% url 'task-detail' task.id %}" class="task-circle-btn d-flex align-items-center justify-content-center">
-                                            {% if task.name == "Addition" %}
-                                                ➕
-                                            {% elif task.name == "Subtraction" %}
-                                                ➖
-                                            {% elif task.name == "Multiplication" %}
-                                                ✖️
-                                            {% elif task.name == "Division" %}
-                                                ➗
+                                <ul class="list-group task-list-vertical d-flex flex-column align-items-center">
+                                    {% for task in lesson.tasks.all %}
+                                        <li class="list-group-item border-0 bg-transparent position-relative {% if task.id in completed_tasks %}bg-success text-white{% endif %}">
+                                            <a href="{% url 'task-detail' task.id %}" class="task-circle-btn d-flex align-items-center justify-content-center">                                           
+                                            </a>
+                                            {% if task.id in completed_tasks %}
+                                                <span class="badge badge-success ml-2" style="font-size:1em;">Completed</span>
+                                                <a href="{% url 'uncomplete-task' task.id %}" class="btn btn-sm btn-outline-warning ml-2">Mark Not Complete</a>
                                             {% else %}
-                                                <span class="star-symbol">&#9733;</span>
+                                                <a href="{% url 'complete-task' task.id %}" class="btn btn-sm btn-outline-success ml-2">Mark Complete</a>
                                             {% endif %}
-                                        </a>
-                                        {% if not forloop.last %}
-                                            <span class="vertical-line"></span>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            <div class="mt-4" style="background: #fffbe6; border-radius: 8px; padding: 16px;">
-                                <h5 class="mb-2 text-center">Simple Pattern</h5>
-                                <div style="font-size:2em; text-align:center;">
-                                    {% for num in random_pattern %}
-                                        <span style="margin-right: 0.5em;">{{ num }}</span>
+                                            {% if not forloop.last %}
+                                                <span class="vertical-line"></span>
+                                            {% endif %}
+                                        </li>
                                     {% endfor %}
+                                </ul>
+                            <div class="card mt-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Completed Tasks</h5>
+                                    <ul class="list-group">
+                                        {% for lesson in lessons %}
+                                            {% for task in lesson.tasks.all %}
+                                                {% if task.id in completed_tasks %}
+                                                    <li class="list-group-item bg-success text-white">
+                                                        {{ task.name }} <small>({{ lesson.name }})</small>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </ul>
                                 </div>
-                                <p class="mt-2 text-center">What comes next?</p>
                             </div>
                         {% else %}
                             <p class="text-muted text-center">No tasks for this lesson yet.</p>
@@ -90,10 +92,10 @@
     .vertical-line {
         display: block;
         width: 4px;
-        height: 40px;           /* Tweak this value! Try 28px-36px for best fit */
+        height: 40px;         
         background: #007bff;
-        margin-top: -4px;       /* Slightly overlap with the button above */
-        margin-bottom: -4px;    /* Slightly overlap with the button below */
+        margin-top: -4px;       
+        margin-bottom: -4px;    
         border-radius: 2px;
         z-index: 0;
     }

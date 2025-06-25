@@ -44,7 +44,6 @@
                     {% endfor %}
                 </div>
             </div>
-            <!-- Sprite and Info Column -->
             <div class="col-md-4 d-flex flex-column align-items-center justify-content-start">
                 {% if request.user.profile.sprite %}
                     <img src="{{ request.user.profile.sprite.url }}" alt="Sprite" style="height:120px; width:auto; margin-bottom:20px;">
@@ -60,7 +59,7 @@
                                 N/A
                             {% endif %}
                         </p>
-                        <p><strong>Score:</strong> {{ random_score }}</p>
+                        <p><strong>Points:</strong> {{ request.user.profile.points }}</p>
                     </div>
                 </div>
             </div>

@@ -93,6 +93,12 @@
     <!-- Check Answer Button -->
     <button id="check-answer">Check Answer</button>
     <p id="result"></p>
+    {% if user.is_authenticated %}
+    <form id="complete-form" method="post" action="{% url 'complete-task' task_id %}" style="display:none;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Complete</button>
+    </form>
+{% endif %}
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -148,7 +154,6 @@
                 e.preventDefault();
                 this.style.background = '#e9ecef';
                 if (dragged) {
-                    // Remove any existing child
                     if (this.firstChild) {
                         this.removeChild(this.firstChild);
                     }
@@ -169,13 +174,10 @@
             });
             const result = document.getElementById('result');
             if (correct) {
-                result.textContent = "Correct! Returning to home page...";
-                setTimeout(function() {
-                    window.location.href = "{% url 'home' %}";
-                }, 1500);
+                result.textContent = "Correct! Click Complete to finish this task.";
+                document.getElementById('complete-form').style.display = "block";
             } else {
                 result.textContent = "Try again!";
-                // Reset: Move all number-boxes back to their original container
                 {% if task_id == 1 %}
                 const numbersContainer = document.getElementById('numbers-1-10');
                 {% elif task_id == 2 %}
