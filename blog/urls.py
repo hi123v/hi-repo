@@ -13,6 +13,7 @@ from .views import (
     complete_task,
 )
 from . import views
+from users import views as users_views
 
 urlpatterns = [
     path('', home, name='home'),  # Home page   
@@ -30,4 +31,6 @@ urlpatterns = [
     path('course/<int:course_id>/', views.course_detail, name='course-detail'),
     path('task/<int:task_id>/complete/', views.complete_task, name='complete-task'),
     path('task/<int:task_id>/uncomplete/', views.uncomplete_task, name='uncomplete-task'),
+    path('membership/', users_views.membership, name='membership'),
+    path('leaderboard/', views.leaderboard, name='leaderboard'),
 ]

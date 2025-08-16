@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, StudentLoginForm, PlacementQuizForm, TeacherLoginForm
 from .models import StudentLoginCode, Profile, LoginRole
 from django.contrib.auth.views import LoginView
@@ -97,3 +97,30 @@ def placement_quiz(request):
 @login_required
 def membership(request):
     return render(request, 'users/membership.html')
+
+def is_teacher(user):
+    return hasattr(user, 'profile') and user.profile.user_type == 'teacher'
+
+@login_required
+@user_passes_test(is_teacher)
+def class_management(request):
+    return render(request, 'users/class_management.html')
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'Your account has been updated!')
+            return redirect('profile')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    return render(request, 'users/profile.html', context)

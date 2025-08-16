@@ -1,29 +1,71 @@
 {% extends "blog/base.html" %}
 {% block content %}
+<style>
+.plan-btn {
+    background: linear-gradient(135deg, #a259ff 0%, #6a11cb 100%);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    box-shadow: 0 4px 14px 0 rgba(106,17,203,0.25), 0 1.5px 0 #fff inset;
+    padding: 10px 32px;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-shadow: 0 2px 8px rgba(106,17,203,0.25);
+    position: relative;
+    overflow: hidden;
+    outline: none;
+    margin-top: 15px;
+}
+.plan-btn:hover, .plan-btn:focus {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 24px 0 rgba(106,17,203,0.35), 0 1.5px 0 #fff inset;
+    background: linear-gradient(135deg, #b47aff 0%, #7f3fff 100%);
+    color: #fff;
+}
+.card-title {
+    color: #fff !important;
+}
+.card-subtitle {
+    color: #fff !important;
+}
+</style>
 <div class="container mt-5">
-    <h2 class="mb-4">Choose Your Membership Plan</h2>
+    <h2 class="mb-4 text-center">Choose Your Membership Plan</h2>
     <div class="row">
         <div class="col-md-4">
-            <div class="card text-center mb-4">
+            <div class="card text-center mb-4" style="background: #7c3aed; color: #fff;">
                 <div class="card-body">
                     <h5 class="card-title">Basic Plan</h5>
-                    <p class="card-text">Placeholder for basic plan details.</p>
+                    <h6 class="card-subtitle mb-2" style="font-size:1.5em;">$5</h6>
+                    <div class="card-text bg-white text-dark rounded p-2 mt-3">
+                        Access to basic features and content.
+                    </div>
+                    <button class="plan-btn">Choose Basic</button>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-center mb-4">
+            <div class="card text-center mb-4" style="background: #7c3aed; color: #fff;">
                 <div class="card-body">
                     <h5 class="card-title">Pro Plan</h5>
-                    <p class="card-text">Placeholder for pro plan details.</p>
+                    <h6 class="card-subtitle mb-2" style="font-size:1.5em;">$10</h6>
+                    <div class="card-text bg-white text-dark rounded p-2 mt-3">
+                        Includes everything in Basic, plus extra tools and resources.
+                    </div>
+                    <button class="plan-btn">Choose Pro</button>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-center mb-4">
+            <div class="card text-center mb-4" style="background: #7c3aed; color: #fff;">
                 <div class="card-body">
                     <h5 class="card-title">Premium Plan</h5>
-                    <p class="card-text">Placeholder for premium plan details.</p>
+                    <h6 class="card-subtitle mb-2" style="font-size:1.5em;">$15</h6>
+                    <div class="card-text bg-white text-dark rounded p-2 mt-3">
+                        All Pro features, plus premium support and exclusive content.
+                    </div>
+                    <button class="plan-btn">Choose Premium</button>
                 </div>
             </div>
         </div>

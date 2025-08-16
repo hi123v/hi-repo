@@ -1,0 +1,79 @@
+{% extends "blog/base.html" %}
+{% block content %}
+<style>
+    .shield {
+        width: 32px;
+        height: 32px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    .gold-shield {
+        background: radial-gradient(circle at 60% 40%, #fff8b0 0%, #ffd700 60%, #bfa100 100%);
+        border-radius: 50%;
+        border: 3px solid #ffd700;
+    }
+    .silver-shield {
+        background: radial-gradient(circle at 60% 40%, #f8f8f8 0%, #c0c0c0 60%, #888 100%);
+        border-radius: 50%;
+        border: 3px solid #c0c0c0;
+    }
+    .bronze-shield {
+        background: radial-gradient(circle at 60% 40%, #ffe0b0 0%, #cd7f32 60%, #8c5a1e 100%);
+        border-radius: 50%;
+        border: 3px solid #cd7f32;
+    }
+    .leaderboard-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 1.1em;
+    }
+    .leaderboard-rank {
+        width: 40px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .leaderboard-name {
+        flex: 1;
+    }
+    .leaderboard-points {
+        width: 60px;
+        text-align: right;
+        font-weight: bold;
+    }
+</style>
+<div class="container mt-4">
+    <h2 class="mb-4">Competitions Board - {{ user_league|default:"League" }}</h2>
+    <div class="card">
+        <div class="card-body">
+            {% for profile in profiles %}
+                <div class="leaderboard-row">
+                    <div class="leaderboard-rank">
+                        {% if forloop.counter == 1 %}
+                            <span class="shield gold-shield"></span>
+                        {% elif forloop.counter == 2 %}
+                            <span class="shield silver-shield"></span>
+                        {% elif forloop.counter == 3 %}
+                            <span class="shield bronze-shield"></span>
+                        {% else %}
+                            {{ forloop.counter }}
+                        {% endif %}
+                    </div>
+                    <div class="leaderboard-name">
+                        {{ profile.user.get_full_name|default:profile.user.username }}
+                        <span class="badge badge-secondary ml-2">{{ profile.league }}</span>
+                        {% if profile.user == request.user %}
+                            <span class="badge badge-success ml-2">You</span>
+                        {% endif %}
+                    </div>
+                    <div class="leaderboard-points">{{ profile.points }}</div>
+                </div>
+            {% empty %}
+                <div class="text-center">No users yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

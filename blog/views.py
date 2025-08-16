@@ -16,6 +16,8 @@ from django.views.generic import (
 )
 from .models import Post, Course
 import random
+from django.contrib.auth import get_user_model
+from users.models import Profile
 
 def home(request):
     courses = Course.objects.prefetch_related('lessons__tasks').all()
@@ -168,3 +170,11 @@ def uncomplete_task(request, task_id):
         profile.save()
     messages.info(request, f"You have marked the task as not completed: {task.name}")
     return redirect('course-detail', course_id=task.lesson.course.id)
+
+def leaderboard(request):
+    user_league = None
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        user_league = request.user.profile.league
+    # Only show users in the same league as the current user
+    profiles = Profile.objects.filter(league=user_league).select_related('user').order_by('-points')[:20]
+    return render(request, 'blog/leaderboard.html', {'profiles': profiles, 'user_league': user_league})

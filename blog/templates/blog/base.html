@@ -45,9 +45,7 @@
                     <div class="navbar-nav">
                         {% if user.is_authenticated %}
                             <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
-                            {% if user.profile.user_type == 'teacher' %}
-                                <a class="nav-item nav-link btn btn-outline-primary ml-2" href="{% url 'membership' %}">Membership</a>
-                            {% endif %}
+                            <a class="nav-item nav-link" href="{% url 'membership' %}">Membership</a>
                         {% else %}
                             <a class="nav-item nav-link" href="{% url 'choose-login' %}">Login</a>
                             <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>
@@ -78,6 +76,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'games' %}">Games</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'leaderboard' %}">Competitions Board</a>
+                        </li>
                         {% if user.is_authenticated %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'post-create' %}">New Post</a>
@@ -88,6 +89,16 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                             </li>
+                            {% if user.profile.user_type == 'teacher' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'class-management' %}">Class Management</a>
+                                </li>
+                            {% endif %}
+                            {% if user.profile.user_type == 'student' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'student-login' %}">Student Login</a>
+                                </li>
+                            {% endif %}
                         {% else %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'choose-login' %}">Login</a>
