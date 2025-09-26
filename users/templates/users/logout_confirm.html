@@ -1,0 +1,6 @@
+<h2>Are you sure you want to log out?</h2>
+<form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit">Yes, log me out</button>
+</form>
+<a href="/">Cancel</a>

@@ -5,7 +5,7 @@ from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, StudentL
 from .models import StudentLoginCode, Profile, LoginRole
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
 def register(request):
@@ -124,3 +124,9 @@ def profile(request):
         'p_form': p_form
     }
     return render(request, 'users/profile.html', context)
+
+def custom_logout_view(request):
+    if request.method == "POST":
+        logout(request)
+        return redirect('/')
+    return render(request, 'logout_confirm.html')
