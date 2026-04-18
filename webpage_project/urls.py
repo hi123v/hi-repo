@@ -21,8 +21,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from users import views as user_views
 from users.views import CustomLoginView
+from . import admin_views
 
 urlpatterns = [
+    # Keep the analytics route before the admin catch-all so it can be reached directly.
+    path('admin/analytics/', admin_views.analytics_dashboard, name='admin-analytics'),
     path('admin/', admin.site.urls),
     path('password-reset/',
         auth_views.PasswordResetView.as_view(

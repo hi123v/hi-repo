@@ -1,0 +1,106 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Analytics</title>
+  <link rel="stylesheet" href="{% static 'blog/admin_analytics.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style> .metric { font-size:20px; font-weight:600; } .metric-small{font-size:14px;color:#666}</style>
+</head>
+<body class="admin-analytics-page">
+  <div class="analytics-section">
+    <div class="analytics-header">
+      <h1>Analytics</h1>
+    </div>
+    <div class="analytics-main">
+      <div class="analytics-top-cards">
+        <div class="analytics-card" data-target="#site-metrics"> 
+          <div class="metric">{{ total_users }}</div>
+          <div class="metric-small">Total Users</div>
+        </div>
+        <div class="analytics-card" data-target="#growth"> 
+          <div class="metric">{{ new_users_last_30 }}</div>
+          <div class="metric-small">New (30d)</div>
+        </div>
+        <div class="analytics-card" data-target="#engagement"> 
+          <div class="metric">{{ active_last_30 }}</div>
+          <div class="metric-small">Active (30d)</div>
+        </div>
+        <div class="analytics-card" data-target="#courses"> 
+          <div class="metric">{{ total_courses }}</div>
+          <div class="metric-small">Courses</div>
+        </div>
+        <div class="analytics-card" data-target="#newsletters"> 
+          <div class="metric">{{ newsletter_last_30 }}</div>
+          <div class="metric-small">Newsletter signups (30d)</div>
+        </div>
+      </div>
+
+      <div id="site-metrics" class="section-anchor">
+        <div class="section-content">
+          <h2>Site Metrics</h2>
+          <p>Users: <strong>{{ total_users }}</strong> — Profiles: <strong>{{ total_profiles }}</strong></p>
+          <div style="max-width:800px;"><canvas id="signupChart"></canvas></div>
+        </div>
+      </div>
+
+      <div id="growth" class="section-anchor" style="margin-top:48px">
+        <div class="section-content">
+          <h2>Growth</h2>
+          <p>New users in last 30 days: <strong>{{ new_users_last_30 }}</strong></p>
+          <p>Memberships sold (30d): <strong>{{ memberships_last_30 }}</strong> — Revenue (30d): <strong>${{ revenue_last_30 }}</strong></p>
+        </div>
+      </div>
+
+      <div id="engagement" class="section-anchor" style="margin-top:48px">
+        <div class="section-content">
+          <h2>Engagement</h2>
+          <p>Active users (last 30d): <strong>{{ active_last_30 }}</strong></p>
+          <p>Completed tasks total: <strong>{{ completed_tasks }}</strong></p>
+        </div>
+      </div>
+
+      <div id="courses" class="section-anchor" style="margin-top:48px">
+        <div class="section-content">
+          <h2>Courses & Tasks</h2>
+          <p>Total courses: <strong>{{ total_courses }}</strong> — Total tasks: <strong>{{ total_tasks }}</strong></p>
+        </div>
+      </div>
+
+      <div id="newsletters" class="section-anchor" style="margin-top:48px">
+        <div class="section-content">
+          <h2>Marketing</h2>
+          <p>Newsletter signups (30d): <strong>{{ newsletter_last_30 }}</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // clickable top cards
+    document.querySelectorAll('.analytics-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var target = card.getAttribute('data-target');
+        if(target){
+          var el = document.querySelector(target);
+          if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+      });
+    });
+
+    // Signup chart
+    (function(){
+      var labels = {{ chart_labels|safe }};
+      var data = {{ chart_signups|safe }};
+      var ctx = document.getElementById('signupChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Signups', data: data, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.08)', fill:true }] },
+        options: { responsive:true, maintainAspectRatio:false }
+      });
+    })();
+  </script>
+</body>
+</html>

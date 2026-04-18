@@ -1,0 +1,19 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <div class="content-section">
+        <h3>People you are following</h3>
+        <div class="list-group mt-3">
+            {% for p in following_profiles %}
+                <a href="{% url 'user-profile' p.user.username %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <img src="{{ p.image.url }}" class="rounded-circle" style="height:40px;width:40px;margin-right:12px;">
+                    <div>
+                        <div class="font-weight-bold">{{ p.user.get_full_name|default:p.user.username }}</div>
+                        <div class="text-muted">@{{ p.user.username }}</div>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="text-muted">You're not following anyone yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}

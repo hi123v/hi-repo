@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'blog/admin_fullscreen.css' %}">
+
+<div class="admin-fullscreen">
+  <header class="admin-fullscreen-header">
+    <div class="header-inner">
+      <h1>Admin</h1>
+      <p class="subtitle">Click a card to jump to that section</p>
+      <div class="admin-cards">
+        <a class="admin-card" href="{% url 'admin-analytics' %}"> 
+          <div class="card-title">Analytics</div>
+          <div class="card-meta">Site metrics</div>
+        </a>
+        {% for app in app_list %}
+          <div class="admin-card" data-target="#app-{{ forloop.counter }}">
+            <div class="card-title">{{ app.name }}</div>
+            <div class="card-meta">{{ app.models|length }} models</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-sections">
+    {% for app in app_list %}
+      <section id="app-{{ forloop.counter }}" class="admin-section">
+        <div class="section-inner">
+          <h2 class="section-title">{{ app.name }}</h2>
+          <div class="models-grid">
+            {% for model in app.models %}
+              <a class="model-card" href="{{ model.admin_url }}">{{ model.name }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    {% endfor %}
+    
+    {# Analytics is linked from the header card; no embedded iframe here #}
+  </main>
+
+  <script>
+    document.querySelectorAll('.admin-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        var target = card.getAttribute('data-target');
+        var el = document.querySelector(target);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  </script>
+</div>
+
+{% endblock %}

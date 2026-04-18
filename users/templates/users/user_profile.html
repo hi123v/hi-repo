@@ -1,0 +1,100 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <div class="content-section">
+        <div class="media">
+            <img class="rounded-circle account-img" src="{{ view_user.profile.image.url }}">
+            <div class="media-body">
+                <h2 class="account-heading">{{ view_user.username }}</h2>
+                <p class="text-secondary">{{ view_user.email }}</p>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Classes</h5>
+                        {% if courses and courses|length > 0 %}
+                            <div>{{ courses.0.name }}</div>
+                            {% if courses|length > 1 %}
+                                <small class="text-muted">+{{ courses|length|add:'-1' }} more</small>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-muted">No classes yet</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-around">
+                    <div class="text-center">
+                        <div class="h4">{{ followers_count }}</div>
+                        <div class="text-muted">Followers</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="h4">{{ following_count }}</div>
+                        <div class="text-muted">Following</div>
+                    </div>
+                    <div class="text-center">
+                        {% if is_friend %}
+                            <form method="post" action="{% url 'send-streak-request' view_user.username %}">{% csrf_token %}
+                                {% if sent_streak_request %}
+                                    <button class="btn btn-sm btn-secondary" disabled>Streak Request Sent</button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-outline-success" type="submit">Start Friend Streak</button>
+                                {% endif %}
+                            </form>
+                        {% else %}
+                            {% if sent_friend_request %}
+                                <button class="btn btn-sm btn-secondary" disabled>Request Sent</button>
+                            {% else %}
+                                <form method="post" action="{% url 'send-friend-request' view_user.username %}">{% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-primary" type="submit">Add Friend</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Achievements</h5>
+                        {% if achievements %}
+                            <ul>
+                            {% for a in achievements %}
+                                <li>{{ a }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="text-muted">No achievements yet</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Friend Streaks</h5>
+                        <div class="h4">{{ friend_streak }}</div>
+                        <p class="text-muted">Current streak with top friend</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Overview</h5>
+                        <p class="text-muted">Member since {{ joined|date:"F Y" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

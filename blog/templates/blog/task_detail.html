@@ -1,224 +1,73 @@
 {% extends "blog/base.html" %}
+{% load static %}
+
 {% block content %}
-    <style>
-        #numbers-1-10, #numbers-11-20 {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .number-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: #f8f9fa;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            cursor: grab;
-            font-size: 1.2em;
-            user-select: none;
-        }
-        .drop-zone {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
-            background: #e9ecef;
-            border: 2px dashed #bbb;
-            border-radius: 6px;
-            vertical-align: middle;
-        }
-    </style>
+<div class="container py-4">
+    <h3>{{ task.name }}</h3>
 
-    <!-- Task Header -->
-    <article class="media content-section">
-        <div class="media-body">
-            <h2 class="mt-0">Task {{ task_id }}</h2>
-            <p>Drag the numbers into the boxes in the correct order.</p>
+    {% if task.template_type == 'reorder' %}
+        <p>Reorder the items into the correct original order and submit to earn points.</p>
+        <div id="reorder-area">
+            <button id="shuffleBtn" class="btn btn-secondary btn-sm mb-2">Shuffle</button>
+            <div id="itemsList"></div>
+            <button id="submitReorder" class="btn btn-primary mt-2">Submit</button>
         </div>
-    </article>
-
-    {% if task_id == 1 %}
-    <div id="number-pop-game" class="content-section mb-4">
-        <h4>Number Pop Game</h4>
-        <p>Listen to the number and click the correct button to unlock the task!</p>
-        <button id="play-audio" class="btn btn-primary mb-3">Play Number</button>
-        <div id="number-buttons" class="mb-3">
-            <button class="btn btn-outline-secondary number-btn" data-number="1">1</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="2">2</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="3">3</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="4">4</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="5">5</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="6">6</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="7">7</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="8">8</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="9">9</button>
-            <button class="btn btn-outline-secondary number-btn" data-number="10">10</button>
-        </div>
-        <div id="feedback"></div>
-    </div>
-    <div id="task-1-10" class="task-container" style="display:none;">
-        <h3>Task 1-10</h3>
-        <div id="numbers-1-10">
-            {% for number in numbers %}
-                <div class="number-box" draggable="true" data-value="{{ number }}">{{ number }}</div>
-            {% endfor %}
-        </div>
-        <div id="drop-zones-1-10">
-            {% for number in numbers %}
-                <div class="drop-zone" data-expected="{{ number }}"></div>
-            {% endfor %}
-        </div>
-    </div>
+    {% elif task.template_type == 'random_click' %}
+        <p>Press "Pick Random" to reveal a target value, then click the matching item to earn points.</p>
+        <button id="pickRandom" class="btn btn-secondary btn-sm mb-2">Pick Random</button>
+        <div id="choices" class="mt-2"></div>
+    {% elif task.template_type == 'placeholder1' or task.template_type == 'placeholder2' %}
+        <div class="alert alert-info">Template placeholder — implement this template later.</div>
+    {% else %}
+        <div class="alert alert-warning">No template assigned to this task.</div>
     {% endif %}
 
-    {% if task_id == 2 %}
-    <div id="task-11-20" class="task-container">
-        <h3>Task 11-20</h3>
-        <div id="numbers-11-20">
-            {% for number in numbers %}
-                <div class="number-box" draggable="true" data-value="{{ number }}">{{ number }}</div>
-            {% endfor %}
-        </div>
-        <div id="drop-zones-11-20">
-            {% for number in numbers %}
-                <div class="drop-zone" data-expected="{{ number }}"></div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Check Answer Button -->
-    <button id="check-answer">Check Answer</button>
-    <p id="result"></p>
-    {% if user.is_authenticated %}
-    <form id="complete-form" method="post" action="{% url 'complete-task' task_id %}" style="display:none;">
+    <form id="complete-form" method="post" action="{% url 'complete-task' task_id=task.id %}" style="display:none;">
         {% csrf_token %}
-        <button type="submit" class="btn btn-success">Complete</button>
+        <button type="submit" class="btn btn-success mt-3">Complete</button>
     </form>
-{% endif %}
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Number Pop Game logic (Task 1-10 only)
-        {% if task_id == 1 %}
-        let currentNumber = null;
-        function playNumber() {
-            currentNumber = Math.floor(Math.random() * 10) + 1;
-            const utter = new SpeechSynthesisUtterance(currentNumber.toString());
-            window.speechSynthesis.speak(utter);
-        }
-        document.getElementById('play-audio').onclick = playNumber;
-        document.querySelectorAll('.number-btn').forEach(btn => {
-            btn.onclick = function() {
-                if (parseInt(this.dataset.number) === currentNumber) {
-                    document.getElementById('feedback').textContent = "Correct! You may continue.";
-                    document.getElementById('number-pop-game').style.display = "none";
-                    document.getElementById('task-1-10').style.display = "block";
-                } else {
-                    document.getElementById('feedback').textContent = "Try again!";
-                }
-            }
-        });
-        // Only hide if the element exists
-        const taskDiv = document.getElementById('task-1-10');
-        if (taskDiv) {
-            taskDiv.style.display = "none";
-        }
-        {% endif %}
-
-        // Drag and Drop logic for both tasks
-        let dragged = null;
-
-        document.querySelectorAll('.number-box').forEach(box => {
-            box.addEventListener('dragstart', function(e) {
-                dragged = this;
-                setTimeout(() => this.style.visibility = 'hidden', 0);
-            });
-            box.addEventListener('dragend', function(e) {
-                this.style.visibility = 'visible';
-            });
-        });
-
-        document.querySelectorAll('.drop-zone').forEach(zone => {
-            zone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.style.background = '#d1e7dd';
-            });
-            zone.addEventListener('dragleave', function(e) {
-                this.style.background = '#e9ecef';
-            });
-            zone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.style.background = '#e9ecef';
-                if (dragged) {
-                    if (this.firstChild) {
-                        this.removeChild(this.firstChild);
-                    }
-                    this.appendChild(dragged);
-                }
-            });
-        });
-
-        // Check Answer logic
-        document.getElementById('check-answer').onclick = function() {
-            let correct = true;
-            document.querySelectorAll('.drop-zone').forEach(zone => {
-                const expected = zone.getAttribute('data-expected');
-                const child = zone.firstChild;
-                if (!child || child.getAttribute('data-value') !== expected) {
-                    correct = false;
-                }
-            });
-            const result = document.getElementById('result');
-            if (correct) {
-                result.textContent = "Correct! Click Complete to finish this task.";
-                document.getElementById('complete-form').style.display = "block";
-            } else {
-                result.textContent = "Try again!";
-                {% if task_id == 1 %}
-                const numbersContainer = document.getElementById('numbers-1-10');
-                {% elif task_id == 2 %}
-                const numbersContainer = document.getElementById('numbers-11-20');
-                {% endif %}
-                document.querySelectorAll('.drop-zone').forEach(zone => {
-                    if (zone.firstChild) {
-                        numbersContainer.appendChild(zone.firstChild);
-                    }
-                });
-            }
-        };
-    });
-    </script>
 </div>
-    </div>
-</div>
+
 <style>
-    .full-width-card-container {
-        width: 100vw;
-        min-height: calc(100vh - 56px); /* Adjust 56px if your navbar is taller */
-        margin-left: calc(-50vw + 50%);
-        margin-right: calc(-50vw + 50%);
-        padding: 0;
-        background: #f8f9fa;
-        position: relative;
-        z-index: 0;
-    }
-    .full-width-card {
-        width: 100%;
-        min-height: calc(100vh - 56px);
-        border-radius: 0;
-        border: none;
-        background: #f8f9fa;
-        box-shadow: none;
-        padding: 32px 0;
-    }
-    @media (max-width: 768px) {
-        .full-width-card, .full-width-card-container {
-            padding: 0;
-        }
-    }
+    .draggable-item { cursor: move; padding:8px; border:1px solid #ddd; margin-bottom:6px; background:#fff }
+    .drag-over { outline: 2px dashed #007bff }
 </style>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script>
+var templateData = [];
+var rawTemplate = (`{{ task.template_data|escapejs }}` || '').trim();
+if (rawTemplate) {
+    try {
+        var parsed = JSON.parse(rawTemplate);
+        if (Array.isArray(parsed)) templateData = parsed;
+        else templateData = [];
+    } catch (e) {
+        // Fallback: interpret as newline-separated values
+        templateData = rawTemplate.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
+    }
+}
+function markComplete(){ window.location = '{% url "complete-task" task_id=task.id %}'; }
+
+(function(){
+    if ('{{ task.template_type }}' !== 'reorder') return;
+    var original = Array.from(templateData);
+    var itemsList = document.getElementById('itemsList');
+    function renderList(arr){ itemsList.innerHTML=''; arr.forEach(function(val,idx){ var div=document.createElement('div'); div.className='draggable-item'; div.draggable=true; div.dataset.index=idx; div.innerText=val; itemsList.appendChild(div); }); addDragHandlers(); }
+    function shuffle(arr){ for (let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+    function addDragHandlers(){ var dragSrc=null; Array.from(itemsList.children).forEach(function(el){ el.addEventListener('dragstart', function(e){ dragSrc = el; e.dataTransfer.effectAllowed='move'; }); el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('drag-over'); }); el.addEventListener('dragleave', function(e){ el.classList.remove('drag-over'); }); el.addEventListener('drop', function(e){ e.preventDefault(); el.classList.remove('drag-over'); if (dragSrc!==el) { itemsList.insertBefore(dragSrc, el.nextSibling); } }); }); }
+    var working = Array.from(original); shuffle(working); renderList(working);
+    document.getElementById('shuffleBtn').addEventListener('click', function(){ shuffle(working); renderList(working); });
+    document.getElementById('submitReorder').addEventListener('click', function(){ var current = Array.from(itemsList.children).map(function(el){ return el.innerText.trim(); }); var ok = current.length===original.length && current.every(function(v,i){ return v===original[i]; }); if (ok){ alert('Correct! You earned points.'); markComplete(); } else { alert('Not correct yet — try again.'); } });
+})();
+
+(function(){
+    if ('{{ task.template_type }}' !== 'random_click') return;
+    var choicesDiv = document.getElementById('choices');
+    function renderChoices(arr){ choicesDiv.innerHTML=''; arr.forEach(function(val){ var b=document.createElement('button'); b.className='btn btn-outline-primary m-1'; b.innerText=val; b.addEventListener('click', function(){ if (b.dataset.target==='1'){ alert('Correct! You earned points.'); markComplete(); } else { alert('Wrong. Try again.'); } }); choicesDiv.appendChild(b); }); }
+    renderChoices(templateData);
+    document.getElementById('pickRandom').addEventListener('click', function(){ var idx=Math.floor(Math.random()*templateData.length); var target=templateData[idx]; Array.from(choicesDiv.children).forEach(function(btn){ if (btn.innerText===target) btn.dataset.target='1'; else btn.dataset.target='0'; }); alert('Target: '+target+' — now click it to earn points.'); });
+})();
+</script>
+
 {% endblock %}

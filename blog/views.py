@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-from .models import Task, Course, CompletedTask
+from .models import Task, Course, CompletedTask, Grade
 from .models import NewsletterSubscriber
 from django.core.mail import send_mail
 from django.conf import settings
@@ -14,22 +14,69 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
-from .models import Post, Course
+from .models import Post, Course, SiteSectionItem, Game
+from .forms import PostForm
 import random
 from django.contrib.auth import get_user_model
 from users.models import Profile
 
 def home(request):
-    courses = Course.objects.prefetch_related('lessons__tasks').all()
+    # If a logged-in user hasn't picked a grade yet, force grade selection first
+    if request.user.is_authenticated and hasattr(request.user, 'profile') and not request.user.profile.grade:
+        return redirect('choose-grade')
+
+    all_courses = Course.objects.prefetch_related('lessons__tasks').all()
     user_type = None
+    # Default to empty; show user's selected courses if any
+    courses = []
     if request.user.is_authenticated and hasattr(request.user, 'profile'):
         user_type = request.user.profile.user_type
+        user_courses = request.user.profile.courses.prefetch_related('lessons__tasks').all()
+        if user_courses.exists():
+            courses = user_courses
     return render(request, 'blog/home.html', {
         'title': 'Home',
         'courses': courses,
+        'all_courses': all_courses,
         'user_type': user_type,
-    
     })
+
+
+@login_required
+def manage_courses(request):
+    if request.method == 'POST':
+        selected = request.POST.getlist('courses')
+        # Update user's profile courses
+        request.user.profile.courses.set(Course.objects.filter(pk__in=selected))
+        return redirect('home')
+    # GET fallback: render page with all courses (modal is used from home)
+    return render(request, 'blog/manage_courses.html', {'all_courses': Course.objects.all()})
+
+
+@login_required
+def choose_grade(request):
+    grades = Grade.objects.all()
+    if request.method == 'POST':
+        grade_id = request.POST.get('grade')
+        if grade_id:
+            grade = get_object_or_404(Grade, pk=grade_id)
+            # save grade name to profile and redirect to confirmation
+            request.user.profile.grade = grade.name
+            request.user.profile.save()
+            return redirect('confirm-grade', grade_id=grade.pk)
+    return render(request, 'blog/choose_grade.html', {'grades': grades})
+
+
+@login_required
+def confirm_grade(request, grade_id):
+    grade = get_object_or_404(Grade, pk=grade_id)
+    if request.method == 'POST':
+        choice = request.POST.get('auto_enroll')
+        if choice == 'yes':
+            # enroll user in all courses for the grade
+            request.user.profile.courses.set(grade.courses.all())
+        return redirect('home')
+    return render(request, 'blog/confirm_grade.html', {'grade': grade})
 
 class PostListView(ListView):
     model = Post
@@ -37,6 +84,13 @@ class PostListView(ListView):
     context_object_name = 'posts'
     ordering = ['-date_posted']
     paginate_by = 5
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Provide an empty post form for the modal (only for authenticated users)
+        if self.request.user.is_authenticated:
+            context['form'] = PostForm()
+        return context
 
 class UserPostListView(ListView):
     model = Post
@@ -97,21 +151,36 @@ def chat(request):
     return render(request, 'blog/chat.html', {'title': 'Chat'})
 
 def about(request):
-    return render(request, 'blog/about.html', {'title': 'About'})
+    # Provide current items for each about subsection (mission, team, career, contact, faq)
+    current_mission = SiteSectionItem.objects.filter(section=SiteSectionItem.SECTION_MISSION, is_current=True).first()
+    current_team = SiteSectionItem.objects.filter(section=SiteSectionItem.SECTION_TEAM, is_current=True).first()
+    current_career = SiteSectionItem.objects.filter(section=SiteSectionItem.SECTION_CAREER, is_current=True).first()
+    current_contact = SiteSectionItem.objects.filter(section=SiteSectionItem.SECTION_CONTACT, is_current=True).first()
+    current_faq = SiteSectionItem.objects.filter(section=SiteSectionItem.SECTION_FAQ, is_current=True).first()
+    return render(request, 'blog/about.html', {
+        'title': 'About',
+        'current_mission': current_mission,
+        'current_team': current_team,
+        'current_career': current_career,
+        'current_contact': current_contact,
+        'current_faq': current_faq,
+    })
 
 def task_detail(request, task_id):
-    # Determine the range of numbers based on the task ID
-    if task_id == 1:  # Task 1: Numbers 1-10
-        numbers = range(1, 11)
-    elif task_id == 2:  # Task 2: Numbers 11-20
-        numbers = range(11, 21)
-    else:
-        numbers = []  # Default to an empty list if the task ID is invalid
+    task = get_object_or_404(Task, id=task_id)
+    # Try to parse template_data as JSON list, otherwise fall back to empty list
+    import json
+    data = []
+    try:
+        data = json.loads(task.template_data) if task.template_data else []
+    except Exception:
+        data = []
 
-    return render(request, 'blog/task_detail.html', {'numbers': numbers, 'task_id': task_id})
+    return render(request, 'blog/task_detail.html', {'task': task, 'template_data': data})
 
 def games(request):
-    return render(request, 'blog/games.html', {'title': 'Games'})
+    games_qs = Game.objects.all()
+    return render(request, 'blog/games.html', {'title': 'Games', 'games': games_qs})
 
 def number_pop_game(request):
     return render(request, 'blog/number_pop_game.html')

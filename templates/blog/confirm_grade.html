@@ -1,0 +1,12 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Would you like to do the courses in {{ grade.name }}?</h2>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn btn-success" name="auto_enroll" value="yes">Yes, add all courses</button>
+      <button class="btn btn-secondary" name="auto_enroll" value="no">No, I'll pick myself</button>
+    </form>
+  </div>
+{% endblock %}

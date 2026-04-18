@@ -1,5 +1,7 @@
 {% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
+    {# Floating button and modal moved to bottom for consistent placement #}
     {% for post in posts %}
         <article class="media content-section">
             <img class="rounded-circle article-img" src="{{ post.author.profile.image.url }}">
@@ -33,5 +35,44 @@
             <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
         {% endif %}
 
+    {% endif %}
+    {% if user.is_authenticated %}
+        <!-- Floating bottom-centered button -->
+        <button id="fabCreatePost" class="fab-post btn btn-primary" data-toggle="modal" data-target="#createPostModal" aria-label="New Post">New Post</button>
+
+        <!-- Create Post Modal -->
+        <div class="modal fade" id="createPostModal" tabindex="-1" role="dialog" aria-labelledby="createPostModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createPostModalLabel">Create Post</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'post-create' %}">
+                            {% csrf_token %}
+                            {% if form %}
+                                {{ form|crispy }}
+                            {% else %}
+                                <div class="form-group">
+                                    <label for="id_title">Title</label>
+                                    <input type="text" name="title" class="form-control" id="id_title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_content">Content</label>
+                                    <textarea name="content" class="form-control" id="id_content" rows="4" required></textarea>
+                                </div>
+                            {% endif %}
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Post</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock content %}

@@ -34,6 +34,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'users.apps.UsersConfig',
+    'about',
     'crispy_forms',
     'crispy_bootstrap4',
     'django.contrib.admin',
@@ -65,7 +66,7 @@ ROOT_URLCONF = 'webpage_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,6 +74,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'blog.context_processors.all_courses',
             ],
         },
     },
@@ -148,7 +150,7 @@ EMAIL_PORT = 587  # Correct port for TLS
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
-DEFAULT_FROM_EMAIL = 'CoolApp <george.a.patterson@outlook.com>'
+DEFAULT_FROM_EMAIL = 'Quest-ly <george.a.patterson@outlook.com>'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

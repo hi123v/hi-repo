@@ -62,7 +62,9 @@
                         {% endif %}
                     </div>
                     <div class="leaderboard-name">
-                        {{ profile.user.get_full_name|default:profile.user.username }}
+                        <a href="{% url 'user-profile' profile.user.username %}">
+                            {{ profile.user.get_full_name|default:profile.user.username }}
+                        </a>
                         <span class="badge badge-secondary ml-2">{{ profile.league }}</span>
                         {% if profile.user == request.user %}
                             <span class="badge badge-success ml-2">You</span>

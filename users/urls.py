@@ -6,6 +6,13 @@ from .views import CustomLoginView
 urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),  # <-- use lowercase 'profile'
+    path('user/<str:username>/', views.user_profile, name='user-profile'),
+    path('friend-request/send/<str:username>/', views.send_friend_request, name='send-friend-request'),
+    path('friend-request/accept/<int:request_id>/', views.accept_friend_request, name='accept-friend-request'),
+    path('streak-request/send/<str:username>/', views.send_streak_request, name='send-streak-request'),
+    path('streak-request/accept/<int:request_id>/', views.accept_streak_request, name='accept-streak-request'),
+    path('follow/<str:username>/', views.toggle_follow, name='toggle-follow'),
+    path('following/', views.following_list, name='following-list'),
     path('choose-login/', views.choose_login, name='choose-login'),
     path('login/', CustomLoginView.as_view(template_name='users/login_form.html'), name='login'),
     path('logout/', views.custom_logout_view, name='logout'),

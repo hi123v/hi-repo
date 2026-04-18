@@ -2,33 +2,33 @@
 
 {% block content %}
     <div class="content-section">
-        <h1>Games</h1>
-        <p>Welcome to a world of strategy, physics and more.</p>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <a href="#" class="card h-100 text-decoration-none text-dark">
-                    <div class="card-body">
-                        <h5 class="card-title">Puzzle Game</h5>
-                        <p class="card-text">Test your logic and problem-solving skills.</p>
+        <div class="container-fluid">
+            <h1 class="text-center">Games</h1>
+            <p class="text-center">Welcome to a world of strategy, physics and more.</p>
+
+            {% if games.exists %}
+                <div class="row justify-content-center">
+                    {% for g in games %}
+                        <div class="col-md-4 col-sm-6 mb-3 d-flex align-items-stretch">
+                            <a href="#" class="card h-100 text-decoration-none text-dark w-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ g.name }}</h5>
+                                    <p class="card-text">{{ g.description|default:"No description" }}</p>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="d-flex justify-content-center align-items-center" style="min-height:40vh;">
+                    <div class="card text-center" style="max-width:600px; width:90%;">
+                        <div class="card-body py-5">
+                            <h3 class="card-title">Sorry — no games at this time</h3>
+                            <p class="card-text">We're working on fun new games. Check back soon or add one via the admin.</p>
+                        </div>
                     </div>
-                </a>
-            </div>
-            <div class="col-md-4 mb-3">
-                <a href="#" class="card h-100 text-decoration-none text-dark">
-                    <div class="card-body">
-                        <h5 class="card-title">Physics Simulator</h5>
-                        <p class="card-text">Explore the laws of physics in a fun way.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4 mb-3">
-                <a href="#" class="card h-100 text-decoration-none text-dark">
-                    <div class="card-body">
-                        <h5 class="card-title">Strategy Challenge</h5>
-                        <p class="card-text">Plan your moves and outsmart your opponent.</p>
-                    </div>
-                </a>
-            </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

@@ -32,17 +32,32 @@
         <div class="row">
             <!-- Courses Column -->
             <div class="col-md-8">
-                <h1 class="mt-4">Courses</h1>
-                <div class="row">
-                    {% for course in courses|slice:":2" %}
+                <div class="d-flex justify-content-between align-items-center mb-2 sticky-top bg-white py-2" style="z-index:10;border-bottom:1px solid #e9ecef;">
+                    <h1 class="mt-2 mb-0">Courses</h1>
+                    {% if request.user.is_authenticated %}
+                        <button class="btn btn-outline-primary" data-toggle="modal" data-target="#manageCoursesModal">Manage your courses</button>
+                    {% endif %}
+                </div>
+                
+                {% if courses and courses|length > 0 %}
+                <div class="courses-scroll">
+                    <div class="row">
+                        {% for course in courses %}
                         <div class="col-md-12 mb-4">
                             <a href="{% url 'course-detail' course.id %}" class="course-btn btn btn-lg btn-primary btn-block d-flex flex-column align-items-center justify-content-center">
                                 <span class="mb-2">{{ course.name }}</span>
                                 <div class="course-placeholder"></div>
                             </a>
                         </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
+                {% else %}
+                <div class="add-course-placeholder d-flex flex-column align-items-center justify-content-center" style="min-height:300px;">
+                    <button class="btn btn-light border rounded-circle add-course-plus d-flex align-items-center justify-content-center" data-toggle="modal" data-target="#manageCoursesModal" style="width:140px;height:140px;font-size:48px;">+</button>
+                    <div class="mt-3"><a href="#" data-toggle="modal" data-target="#manageCoursesModal">Add another course</a></div>
+                </div>
+                {% endif %}
             </div>
             <div class="col-md-4 d-flex flex-column align-items-center justify-content-start">
                 {% if request.user.profile.sprite %}
@@ -62,6 +77,40 @@
                         <p><strong>Points:</strong> {{ request.user.profile.points }}</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Courses Modal -->
+    <div class="modal fade" id="manageCoursesModal" tabindex="-1" role="dialog" aria-labelledby="manageCoursesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form method="post" action="{% url 'manage-courses' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="manageCoursesModalLabel">Manage Your Courses</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            {% for course in all_courses %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="courses" value="{{ course.id }}" id="courseCheck{{ course.id }}"
+                                            {% if request.user.is_authenticated and course in request.user.profile.courses.all %}checked{% endif %}>
+                                        <label class="form-check-label" for="courseCheck{{ course.id }}">{{ course.name }}</label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

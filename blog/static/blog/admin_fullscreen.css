@@ -1,0 +1,31 @@
+/* Fullscreen admin index styles */
+body {
+  margin: 0;
+}
+.admin-fullscreen-header {
+  background: linear-gradient(90deg,#0d6efd 0%, #6610f2 100%);
+  color: #fff;
+  padding: 48px 24px;
+}
+.admin-fullscreen-header .header-inner { max-width:1200px; margin:0 auto; }
+.admin-fullscreen-header h1 { margin:0 0 8px; font-size:42px; }
+.admin-fullscreen-header .subtitle { margin:0 0 18px; color:rgba(255,255,255,0.9) }
+.admin-cards { display:flex; gap:12px; flex-wrap:wrap; }
+.admin-card { background: rgba(255,255,255,0.08); padding:18px 22px; border-radius:10px; min-width:180px; cursor:pointer; transition:transform .18s ease, background .18s ease; }
+.admin-card:hover { transform:translateY(-6px); background: rgba(255,255,255,0.12); }
+.card-title { font-weight:700; font-size:18px; }
+.card-meta { font-size:13px; opacity:0.9 }
+
+.admin-sections { scroll-behavior:smooth }
+.admin-section { height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; box-sizing:border-box; }
+.section-inner { max-width:1100px; width:100%; }
+.section-title { font-size:36px; margin:0 0 18px; }
+.models-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:18px; }
+.model-card { display:block; padding:18px; background:#fff; border-radius:10px; color:#111; text-decoration:none; box-shadow:0 6px 18px rgba(0,0,0,0.08); font-weight:600; }
+.model-card:hover { transform:translateY(-6px); box-shadow:0 12px 30px rgba(0,0,0,0.12); }
+
+@media (max-width:800px){
+  .admin-fullscreen-header h1 { font-size:28px }
+  .admin-card{ min-width:140px }
+  .section-title{ font-size:28px }
+}

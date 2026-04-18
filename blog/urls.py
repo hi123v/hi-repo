@@ -17,6 +17,8 @@ from users import views as users_views
 
 urlpatterns = [
     path('', home, name='home'),  # Home page   
+    path('choose-grade/', views.choose_grade, name='choose-grade'),
+    path('confirm-grade/<int:grade_id>/', views.confirm_grade, name='confirm-grade'),
     path('chat/', PostListView.as_view(), name='chat'),  
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
@@ -33,4 +35,5 @@ urlpatterns = [
     path('task/<int:task_id>/uncomplete/', views.uncomplete_task, name='uncomplete-task'),
     path('membership/', users_views.membership, name='membership'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
+    path('manage-courses/', views.manage_courses, name='manage-courses'),
 ]
