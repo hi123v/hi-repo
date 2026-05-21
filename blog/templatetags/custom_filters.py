@@ -5,4 +5,15 @@ register = template.Library()
 
 @register.filter(name='is_not_student')
 def is_not_student(user):
-    return not user.groups.filter(name='Students').exists()
+    try:
+        if not getattr(user, 'is_authenticated', False):
+            return True
+        # Check group membership (name used elsewhere is 'Student')
+        if user.groups.filter(name='Student').exists():
+            return False
+        # Fallback to profile.user_type if present
+        if hasattr(user, 'profile') and getattr(user.profile, 'user_type', None) == 'student':
+            return False
+        return True
+    except Exception:
+        return True

@@ -48,6 +48,7 @@ urlpatterns = [
             ),
         name='password_reset_complete'),
     path('blog/', include('blog.urls')),
+    path('quests/', include('quests.urls')),
     path('', include('blog.urls')),
     path('users/', include('users.urls')),
     path('login/', auth_views.LoginView.as_view(template_name='users/login_form.html'), name='login'),

@@ -5,6 +5,7 @@ from .views import CustomLoginView
 
 urlpatterns = [
     path('register/', views.register, name='register'),
+    path('register/<str:role>/', views.register, name='register-role'),
     path('profile/', views.profile, name='profile'),  # <-- use lowercase 'profile'
     path('user/<str:username>/', views.user_profile, name='user-profile'),
     path('friend-request/send/<str:username>/', views.send_friend_request, name='send-friend-request'),

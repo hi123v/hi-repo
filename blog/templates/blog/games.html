@@ -10,12 +10,14 @@
                 <div class="row justify-content-center">
                     {% for g in games %}
                         <div class="col-md-4 col-sm-6 mb-3 d-flex align-items-stretch">
-                            <a href="#" class="card h-100 text-decoration-none text-dark w-100">
+                            {% with launch=g.get_launch_url %}
+                              <a href="{{ launch|default:'#' }}" class="card h-100 text-decoration-none text-dark w-100">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ g.name }}</h5>
                                     <p class="card-text">{{ g.description|default:"No description" }}</p>
                                 </div>
-                            </a>
+                              </a>
+                            {% endwith %}
                         </div>
                     {% endfor %}
                 </div>

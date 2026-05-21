@@ -1,0 +1,76 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'blog/ball_game.css' %}">
+
+<div class="game-shell">
+  <aside class="game-creator">
+    <h2>Create Ball Drop</h2>
+    <div class="creator-section">
+      <label>Game</label>
+      <select id="game-select" class="form-control">
+        <option value="">(All assets)</option>
+        {% for gg in games %}
+          <option value="{{ gg.id }}" {% if selected_game and selected_game.id == gg.id %}selected{% endif %}>{{ gg.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="creator-section">
+      <label>Balls</label>
+      <div class="balls">
+        {% for b in ball_choices %}
+          <button class="ball-select" data-ball="{{ b.id }}">{{ b.label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="creator-section">
+      <label>Ground</label>
+      <div class="grounds">
+        {% for g in grounds %}
+          <button class="ground-select" data-ground-img="{{ g.image.url }}" data-ground-name="{{ g.name }}">{{ g.name }}</button>
+        {% endfor %}
+        {# Fallback built-in choices #}
+        {% for g in ground_choices %}
+          <button class="ground-select" data-ground="{{ g.id }}">{{ g.label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="creator-section">
+      <button id="start-game" class="start-btn">Start / Reset</button>
+    </div>
+    <p class="note">Drag an item from the bottom bar onto the canvas, then drag to reposition it.</p>
+  </aside>
+
+  <main class="game-area">
+    <div class="game-top">
+      <div class="game-info">Ball: <span id="cur-ball">soccer</span> — Ground: <span id="cur-ground">concrete</span></div>
+    </div>
+    <canvas id="gameCanvas" width="900" height="520"></canvas>
+    <div class="bottom-bar">
+      <div class="bar-inner">
+        {% for it in items %}
+          <div class="asset-thumb" draggable="true" data-asset-id="{{ it.id }}" data-asset-url="{{ it.image.url }}" title="{{ it.name }}">
+            <img src="{{ it.image.url }}" alt="{{ it.name }}">
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <script>
+      // Provide asset lists to JS
+      window.__GAME_ASSETS = {
+        items: [
+          {% for it in items %}{id: '{{ it.id }}', url: '{{ it.image.url }}', name: '{{ it.name }}'}{% if not forloop.last %},{% endif %}{% endfor %}
+        ],
+        grounds: [
+          {% for g in grounds %}{id: '{{ g.id }}', url: '{{ g.image.url }}', name: '{{ g.name }}'}{% if not forloop.last %},{% endif %}{% endfor %}
+        ]
+      };
+      // Expose selected game id so client can reload when user changes game
+      window.__SELECTED_GAME_ID = '{{ selected_game.id }}';
+    </script>
+  </main>
+</div>
+
+<script src="{% static 'blog/ball_game.js' %}"></script>
+{% endblock %}

@@ -6,13 +6,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin Analytics</title>
   <link rel="stylesheet" href="{% static 'blog/admin_analytics.css' %}">
+  <link rel="stylesheet" href="{% static 'blog/admin_fullscreen.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style> .metric { font-size:20px; font-weight:600; } .metric-small{font-size:14px;color:#666}</style>
 </head>
 <body class="admin-analytics-page">
   <div class="analytics-section">
-    <div class="analytics-header">
-      <h1>Analytics</h1>
+    <div class="analytics-header admin-fullscreen-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;width:100%;">
+        <h1 style="margin:0">Analytics</h1>
+        <a href="{% url 'admin:index' %}" class="admin-card" style="background:transparent;padding:8px 12px;border-radius:8px;text-decoration:none;color:inherit;">Back to Admin</a>
+      </div>
     </div>
     <div class="analytics-main">
       <div class="analytics-top-cards">
@@ -93,7 +97,7 @@
     // Signup chart
     (function(){
       var labels = {{ chart_labels|safe }};
-      var data = {{ chart_signups|safe }};
+      var data = {{ chart_signups|safe }} ;
       var ctx = document.getElementById('signupChart').getContext('2d');
       new Chart(ctx, {
         type: 'line',

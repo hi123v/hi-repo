@@ -39,7 +39,8 @@
                             <a class="nav-item nav-link" href="{% url 'chat' %}">Chat</a>
                         {% endif %}
                         <a class="nav-item nav-link" href="{% url 'blog-about' %}">About</a>
-                        <a class="nav-item nav-link" href="{% url 'games' %}">Games</a> <!-- Added Games link -->
+                        <a class="nav-item nav-link" href="{% url 'games' %}">Games</a>
+                        <a class="nav-item nav-link" href="{% url 'quests' %}">Quests</a>
                     </div>
                     <!-- Navbar Right Side -->
                     <div class="navbar-nav">
@@ -77,6 +78,9 @@
                             <a class="nav-link" href="{% url 'games' %}">Games</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{% url 'quests' %}">Quests</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'leaderboard' %}">Competitions Board</a>
                         </li>
                         {% if user.is_authenticated %}
@@ -91,11 +95,7 @@
                                     <a class="nav-link" href="{% url 'class-management' %}">Class Management</a>
                                 </li>
                             {% endif %}
-                            {% if user.profile.user_type == 'student' %}
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'student-login' %}">Student Login</a>
-                                </li>
-                            {% endif %}
+                            {# Authenticated users don't need the Student Login button in the sidebar #}
                         {% else %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'choose-login' %}">Login</a>

@@ -29,6 +29,7 @@ urlpatterns = [
     path('about/', views.about, name='blog-about'),
     path('games/', games, name='games'),
     path('games/number-pop/', number_pop_game, name='number-pop-game'),
+    path('games/ball-drop/', views.ball_game, name='ball-drop-game'),
     path('newsletter-signup/', views.newsletter_signup, name='newsletter-signup'),
     path('course/<int:course_id>/', views.course_detail, name='course-detail'),
     path('task/<int:task_id>/complete/', views.complete_task, name='complete-task'),

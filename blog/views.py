@@ -143,7 +143,16 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return False
     
 def is_not_student(user):
-    return not user.groups.filter(name='Student').exists()
+    try:
+        if not getattr(user, 'is_authenticated', False):
+            return True
+        if user.groups.filter(name='Student').exists():
+            return False
+        if hasattr(user, 'profile') and getattr(user.profile, 'user_type', None) == 'student':
+            return False
+        return True
+    except Exception:
+        return True
 
 @login_required
 @user_passes_test(is_not_student)
@@ -182,8 +191,70 @@ def games(request):
     games_qs = Game.objects.all()
     return render(request, 'blog/games.html', {'title': 'Games', 'games': games_qs})
 
+
+
+
 def number_pop_game(request):
-    return render(request, 'blog/number_pop_game.html')
+    # Optionally accept a ?game=ID to select a Game instance
+    game_id = request.GET.get('game')
+    sel_game = None
+    if game_id:
+        try:
+            sel_game = Game.objects.get(pk=int(game_id))
+        except Exception:
+            sel_game = None
+
+    # If the selected game is marked out of order, show a friendly message
+    if sel_game and getattr(sel_game, 'out_of_order', False):
+        return render(request, 'blog/game_out_of_order.html', {'game': sel_game})
+
+    return render(request, 'blog/number_pop_game.html', {'selected_game': sel_game})
+
+
+def ball_game(request):
+    # Provide options for the creator: ball types and ground types
+    ball_choices = [
+        {'id': 'soccer', 'label': 'Soccer Ball', 'img': ''},
+        {'id': 'baseball', 'label': 'Baseball', 'img': ''},
+        {'id': 'football', 'label': 'Football', 'img': ''},
+    ]
+    ground_choices = [
+        {'id': 'concrete', 'label': 'Concrete'},
+        {'id': 'water', 'label': 'Water'},
+        {'id': 'foam', 'label': 'Foam'},
+    ]
+    # Load uploaded game assets (items and grounds) to present in the bottom bar
+    from .models import GameAsset, Game
+    games_qs = Game.objects.all()
+
+    # Optionally filter assets by a selected game id (passed as ?game=ID)
+    game_id = request.GET.get('game')
+    if game_id:
+        try:
+            sel_game = Game.objects.get(pk=int(game_id))
+        except Exception:
+            sel_game = None
+    else:
+        sel_game = None
+
+    if sel_game:
+        items = GameAsset.objects.filter(asset_type=GameAsset.ASSET_ITEM, game=sel_game)
+        grounds = GameAsset.objects.filter(asset_type=GameAsset.ASSET_GROUND, game=sel_game)
+    else:
+        items = GameAsset.objects.filter(asset_type=GameAsset.ASSET_ITEM)
+        grounds = GameAsset.objects.filter(asset_type=GameAsset.ASSET_GROUND)
+    # If the selected game is marked out of order, render the out-of-order page instead
+    if sel_game and getattr(sel_game, 'out_of_order', False):
+        return render(request, 'blog/game_out_of_order.html', {'game': sel_game})
+    return render(request, 'blog/ball_game.html', {
+        'ball_choices': ball_choices,
+        'ground_choices': ground_choices,
+        'items': items,
+        'grounds': grounds,
+        'games': games_qs,
+        'selected_game': sel_game,
+        'title': 'Ball Drop Game'
+    })
 
 def newsletter_signup(request):
     if request.method == "POST":

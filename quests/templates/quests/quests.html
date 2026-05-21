@@ -1,0 +1,62 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <div class="container-fluid p-0">
+        {% if page and page.hero_image %}
+            <div>
+                <img src="{{ page.hero_image.url }}" alt="{{ page.hero_title }}" style="width:100%;height:auto;object-fit:cover;">
+            </div>
+        {% else %}
+            <div class="jumbotron jumbotron-fluid text-center bg-light py-5">
+                <div class="container">
+                    <h1 class="display-4">Quests</h1>
+                    <p class="lead">Complete quests to earn points.</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="container mt-4">
+            {% if page and page.hero_text %}
+                <p class="lead">{{ page.hero_text }}</p>
+            {% endif %}
+
+            {% for cat in categories %}
+                <h3 class="mt-4">{{ cat.name }}</h3>
+                {% if cat.description %}
+                    <p class="text-muted">{{ cat.description }}</p>
+                {% endif %}
+                <div class="row">
+                    {% for quest in cat.quests.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{ quest.title }}</h5>
+                                    <p class="card-text">{{ quest.description|default:"(no description)" }}</p>
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Reward: {{ quest.points_reward }} pts</small>
+                                        {% if user.is_authenticated %}
+                                            {% if quest.id in completed_ids %}
+                                                <button class="btn btn-outline-secondary" disabled>Completed</button>
+                                            {% else %}
+                                                <form method="post" action="{% url 'quest-complete' quest.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success">Done</button>
+                                                </form>
+                                            {% endif %}
+                                        {% else %}
+                                            <a href="{% url 'choose-login' %}?next={% url 'quests' %}" class="btn btn-primary">Log in to claim</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% empty %}
+                <p>No quests defined yet. Add some in the admin.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

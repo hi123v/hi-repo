@@ -1,13 +1,21 @@
 {% extends "blog/base.html" %}
 {% block content %}
-    {% if user_type == 'student' %}
-        <h2>Welcome, Student!</h2>
-    {% elif user_type == 'parent' %}
-        <h2>Welcome, Parent!</h2>
-    {% elif user_type == 'teacher' %}
-        <h2>Welcome, Teacher!</h2>
+    {% if request.user.is_authenticated %}
+        {% if request.user.get_full_name %}
+            <h2>Welcome {{ request.user.get_full_name }}</h2>
+        {% else %}
+            {% if request.user.profile.user_type == 'student' %}
+                <h2>Welcome student</h2>
+            {% elif request.user.profile.user_type == 'parent' %}
+                <h2>Welcome parent</h2>
+            {% elif request.user.profile.user_type == 'teacher' %}
+                <h2>Welcome teacher</h2>
+            {% else %}
+                <h2>Welcome</h2>
+            {% endif %}
+        {% endif %}
     {% else %}
-        <h2>Welcome!</h2>
+        <h2>Welcome</h2>
     {% endif %}
     <style>
         .course-btn {

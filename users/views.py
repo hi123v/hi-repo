@@ -13,34 +13,71 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import FriendRequest, Friendship, StreakRequest
 
-def register(request):
+def register(request, role=None):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
+            user = form.save()
+            # set profile fields created by post_save signal
+            user.refresh_from_db()
+            user.profile.user_type = form.cleaned_data.get('user_type')
+            user.profile.grade = form.cleaned_data.get('grade') or ''
+            user.profile.save()
+            # if student, optionally store parent email in StudentLoginCode
+            if user.profile.user_type == 'student':
+                parent_email = form.cleaned_data.get('parent_email')
+                if parent_email:
+                    import secrets
+                    code = ''.join(secrets.choice('0123456789') for _ in range(4))
+                    StudentLoginCode.objects.create(user=user, parent_email=parent_email, code=code)
             messages.success(request, f'your account has been created! You are now able to log in')
             return redirect('login')
+        # if POST but form invalid, render form page again (respect role if provided)
+        if role:
+            return render(request, 'users/register_form.html', {'form': form, 'role': role})
+        else:
+            roles = LoginRole.objects.all()
+            return render(request, 'users/register.html', {'roles': roles, 'form': form})
     else:
+        # If a role is provided in the URL, show the form-only page preselecting that role
+        if role:
+            initial = {'user_type': role}
+            form = UserRegisterForm(initial=initial)
+            return render(request, 'users/register_form.html', {'form': form, 'role': role})
+        # otherwise show the chooser with role image buttons
         form = UserRegisterForm()
-    return render(request, 'users/register.html', {'form': form})
+        roles = LoginRole.objects.all()
+        return render(request, 'users/register.html', {'roles': roles})
 
 def student_login(request):
     if request.method == 'POST':
         form = StudentLoginForm(request.POST)
         if form.is_valid():
-            code = form.cleaned_data.get('code')
-            try:
-                login_code = StudentLoginCode.objects.get(code=code)
-                user = login_code.user
-            except StudentLoginCode.DoesNotExist:
-                user = None
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            parent_email = form.cleaned_data.get('parent_email')
 
-            if user and hasattr(user, 'profile') and user.profile.user_type == 'student':
-                login(request, user)
-                return redirect('placement-quiz')
+            # Check username exists
+            try:
+                user_obj = User.objects.get(username=username)
+            except User.DoesNotExist:
+                form.add_error('username', 'Username not found.')
             else:
-                form.add_error(None, 'Invalid credentials.')
+                # Check password
+                user_auth = authenticate(request, username=username, password=password)
+                if user_auth is None:
+                    form.add_error('password', 'Incorrect password.')
+                else:
+                    # Ensure the account is a student
+                    if not hasattr(user_auth, 'profile') or user_auth.profile.user_type != 'student':
+                        form.add_error(None, 'Account is not registered as a student.')
+                    else:
+                        # Validate parent's email against StudentLoginCode records
+                        if StudentLoginCode.objects.filter(user=user_auth, parent_email=parent_email).exists():
+                            login(request, user_auth)
+                            return redirect('placement-quiz')
+                        else:
+                            form.add_error('parent_email', "Parent's email doesn't match our records.")
     else:
         form = StudentLoginForm()
     return render(request, 'users/student_login.html', {'form': form})
