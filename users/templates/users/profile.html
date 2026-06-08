@@ -11,7 +11,7 @@
         </div>
         <div class="row mt-3 mb-3">
                         {% for u in all_users %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="list-group-item d-flex justify-content-between align-items-center profile-list-item">
                                 <div>
                                     <img src="{{ u.profile.image.url }}" class="rounded-circle" style="height:36px;width:36px;margin-right:8px;"> 
                                     <a href="{% url 'user-profile' u.username %}">{{ u.get_full_name|default:u.username }}</a>
@@ -23,14 +23,14 @@
                                 </div>
                             </div>
                             {% if pending_friend_requests or pending_streak_requests %}
-                            <div class="card mb-3">
+                            <div class="card mb-3 profile-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Pending Requests</h5>
                                     {% if pending_friend_requests %}
                                         <h6>Friend Requests</h6>
                                         <ul class="list-group mb-2">
                                         {% for fr in pending_friend_requests %}
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center profile-list-item">
                                                 <div>
                                                     <img src="{{ fr.from_user.profile.image.url }}" class="rounded-circle" style="height:36px;width:36px;margin-right:8px;"> 
                                                     {{ fr.from_user.get_full_name|default:fr.from_user.username }}
@@ -48,7 +48,7 @@
                                         <h6>Streak Requests</h6>
                                         <ul class="list-group">
                                         {% for sr in pending_streak_requests %}
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center profile-list-item">
                                                 <div>
                                                     <img src="{{ sr.from_user.profile.image.url }}" class="rounded-circle" style="height:36px;width:36px;margin-right:8px;"> 
                                                     {{ sr.from_user.get_full_name|default:sr.from_user.username }}
@@ -70,8 +70,8 @@
                         {% endfor %}
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="d-flex justify-content-around">
+            <div class="col-12">
+                <div class="d-flex justify-content-around flex-wrap">
                     <div class="text-center">
                         <div class="h4">{{ followers_count }}</div>
                         <div class="text-muted">Followers</div>
@@ -90,8 +90,8 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-3">
+            <div class="col-12">
+                <div class="card mb-3 profile-card">
                     <div class="card-body">
                         <h5 class="card-title">Achievements</h5>
                         {% if achievements %}
@@ -106,8 +106,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card mb-3">
+            <div class="col-12">
+                <div class="card mb-3 profile-card">
                     <div class="card-body">
                         <h5 class="card-title">Friend Streaks</h5>
                         <div class="h4">{{ friend_streak }}</div>
@@ -118,8 +118,8 @@
         </div>
 
         <div class="row">
-            <div class="col-md-12">
-                <div class="card mb-3">
+            <div class="col-12">
+                <div class="card mb-3 profile-card">
                     <div class="card-body">
                         <h5 class="card-title">Overview</h5>
                         <p class="text-muted">Member since {{ joined|date:"F Y" }}</p>
@@ -127,16 +127,16 @@
                 </div>
             </div>
         </div>
-        <div class="card mb-3">
+        <div class="card mb-3 profile-card">
             <div class="card-body">
                 <h5 class="card-title">Find Friends</h5>
                 <form method="get" class="form-inline mb-3">
                     <input type="text" name="q" class="form-control mr-2" placeholder="Search users" value="{{ search_query }}">
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
-                <div class="list-group">
+                <div class="list-group profile-list">
                     {% for u in all_users %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="list-group-item d-flex justify-content-between align-items-center profile-list-item">
                             <div>
                                 <img src="{{ u.profile.image.url }}" class="rounded-circle" style="height:36px;width:36px;margin-right:8px;"> 
                                 <a href="{% url 'user-profile' u.username %}">{{ u.get_full_name|default:u.username }}</a>

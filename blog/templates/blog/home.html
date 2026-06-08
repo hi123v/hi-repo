@@ -75,13 +75,9 @@
                     <div class="card-body">
                         <h4 class="card-title mb-3">Your Info</h4>
                         <p><strong>Name:</strong> {{ request.user.get_full_name|default:request.user.username }}</p>
-                        <p><strong>Grade:</strong> 
-                            {% if user_type %}
-                                {{ user_type|title }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </p>
+                        {% if request.user.is_authenticated and request.user.profile.user_type == 'student' %}
+                        <p><strong>Grade:</strong> {{ request.user.profile.grade|default:"N/A" }}</p>
+                        {% endif %}
                         <p><strong>Points:</strong> {{ request.user.profile.points }}</p>
                     </div>
                 </div>

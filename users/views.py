@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Q
-from blog.models import Course
+from blog.models import Course, Grade as GradeModel
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import FriendRequest, Friendship, StreakRequest
@@ -20,9 +20,52 @@ def register(request, role=None):
             user = form.save()
             # set profile fields created by post_save signal
             user.refresh_from_db()
-            user.profile.user_type = form.cleaned_data.get('user_type')
-            user.profile.grade = form.cleaned_data.get('grade') or ''
+            # user_type comes from the URL role (buttons lead to /register/<role>/)
+            user.profile.user_type = role or 'student'
+            grade = form.cleaned_data.get('grade') or ''
+            # Normalize grade values (e.g. '2' -> '2nd') so they match Grade.name
+            def _normalize_grade(g):
+                if not g:
+                    return ''
+                g = str(g).strip()
+                if not g.isdigit():
+                    return g
+                try:
+                    n = int(g)
+                except Exception:
+                    return g
+                if 10 <= (n % 100) <= 20:
+                    suffix = 'th'
+                else:
+                    suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+                return f"{n}{suffix}"
+
+            grade_normalized = _normalize_grade(grade)
+            # Only assign a grade for student accounts; clear for others
+            if user.profile.user_type == 'student':
+                user.profile.grade = grade_normalized
+            else:
+                user.profile.grade = ''
             user.profile.save()
+            # Auto-enroll courses for explicit grade selections (not 'Unsure' or empty)
+            if user.profile.user_type == 'student' and grade and grade.lower() != 'unsure':
+                try:
+                    # try both normalized and raw grade when matching Grade objects
+                    grade_obj = GradeModel.objects.filter(Q(name__iexact=grade_normalized) | Q(name__iexact=grade)).first()
+                    if grade_obj:
+                        courses = grade_obj.courses.all()
+                        if courses.exists():
+                            user.profile.courses.set(courses)
+                except Exception:
+                    pass
+            # Log the user in so placement quiz (if needed) can save grade
+            try:
+                raw_password = form.cleaned_data.get('password1')
+                user_auth = authenticate(request, username=user.username, password=raw_password)
+                if user_auth:
+                    login(request, user_auth)
+            except Exception:
+                pass
             # if student, optionally store parent email in StudentLoginCode
             if user.profile.user_type == 'student':
                 parent_email = form.cleaned_data.get('parent_email')
@@ -30,8 +73,12 @@ def register(request, role=None):
                     import secrets
                     code = ''.join(secrets.choice('0123456789') for _ in range(4))
                     StudentLoginCode.objects.create(user=user, parent_email=parent_email, code=code)
-            messages.success(request, f'your account has been created! You are now able to log in')
-            return redirect('login')
+            messages.success(request, f'your account has been created!')
+            # If user selected 'Unsure', send them to placement quiz to determine grade
+            if grade and grade.lower() == 'unsure':
+                return redirect('placement-quiz')
+            # Otherwise redirect to home/profile (user is logged in)
+            return redirect('home')
         # if POST but form invalid, render form page again (respect role if provided)
         if role:
             return render(request, 'users/register_form.html', {'form': form, 'role': role})
@@ -41,8 +88,7 @@ def register(request, role=None):
     else:
         # If a role is provided in the URL, show the form-only page preselecting that role
         if role:
-            initial = {'user_type': role}
-            form = UserRegisterForm(initial=initial)
+            form = UserRegisterForm()
             return render(request, 'users/register_form.html', {'form': form, 'role': role})
         # otherwise show the chooser with role image buttons
         form = UserRegisterForm()
@@ -68,10 +114,15 @@ def student_login(request):
                 if user_auth is None:
                     form.add_error('password', 'Incorrect password.')
                 else:
-                    # Ensure the account is a student
-                    if not hasattr(user_auth, 'profile') or user_auth.profile.user_type != 'student':
-                        form.add_error(None, 'Account is not registered as a student.')
+                    # Ensure the account is a student (unless superuser)
+                    if not user_auth.is_superuser and (not hasattr(user_auth, 'profile') or user_auth.profile.user_type != 'student'):
+                        other_role = getattr(user_auth.profile, 'user_type', 'other') if hasattr(user_auth, 'profile') else 'other'
+                        form.add_error(None, f"Account is registered as {other_role}. Did you forget your account, or would you like to register a student account? Register here: /register/student/")
                     else:
+                        # If superuser, allow login without parent email validation
+                        if user_auth.is_superuser:
+                            login(request, user_auth)
+                            return redirect('placement-quiz')
                         # Validate parent's email against StudentLoginCode records
                         if StudentLoginCode.objects.filter(user=user_auth, parent_email=parent_email).exists():
                             login(request, user_auth)
@@ -88,12 +139,22 @@ def teacher_login(request):
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user and hasattr(user, 'profile') and user.profile.user_type == 'teacher':
-                login(request, user)
-                return redirect('membership')
+            try:
+                user_obj = User.objects.get(username=username)
+            except User.DoesNotExist:
+                form.add_error('username', 'Username not found.')
             else:
-                form.add_error(None, 'Invalid credentials.')
+                user_auth = authenticate(request, username=username, password=password)
+                if user_auth is None:
+                    form.add_error('password', 'Incorrect password.')
+                else:
+                    # Allow superuser to login regardless of stored role
+                    if not user_auth.is_superuser and (not hasattr(user_auth, 'profile') or user_auth.profile.user_type != 'teacher'):
+                        other_role = getattr(user_auth.profile, 'user_type', 'other') if hasattr(user_auth, 'profile') else 'other'
+                        form.add_error(None, f"Account is registered as {other_role}. Did you forget your account, or would you like to register a teacher account? Register here: /register/teacher/")
+                    else:
+                        login(request, user_auth)
+                        return redirect('membership')
     else:
         form = TeacherLoginForm()
     return render(request, 'users/teacher_login.html', {'form': form})
@@ -103,18 +164,25 @@ class CustomLoginView(LoginView):
         if not request.GET.get('user_type'):
             return redirect('choose-login')
         return super().dispatch(request, *args, **kwargs)
-
-def form_valid(self, form):
-    response = super().form_valid(form)
-    user_type = self.request.POST.get('user_type') or self.request.GET.get('user_type')
-    if user_type and hasattr(self.request.user, 'profile'):
-        self.request.user.profile.user_type = user_type
-        self.request.user.profile.save()
-    return response
+    def form_valid(self, form):
+        # Ensure the authenticated user's stored role matches the requested login role.
+        user = form.get_user()
+        user_type = self.request.POST.get('user_type') or self.request.GET.get('user_type')
+        # Allow superuser to login to any role view regardless of stored profile.user_type
+        if user_type and hasattr(user, 'profile') and not user.is_superuser and user.profile.user_type != user_type:
+            messages.error(self.request, f"Account is registered as {user.profile.user_type}. Did you forget your account or would you like to register a {user_type} account?")
+            return redirect('register-role', role=user_type)
+        # Proceed with normal login (do not overwrite stored profile.user_type on login)
+        return super().form_valid(form)
 
 def choose_login(request):
     roles = LoginRole.objects.all()
     return render(request, 'users/login.html', {'roles': roles})
+
+
+def teachers(request):
+    # Blank page for teachers section — placeholder template
+    return render(request, 'users/teachers.html')
 
 @login_required
 def placement_quiz(request):
@@ -156,6 +224,14 @@ def profile(request):
         if u_form.is_valid() and p_form.is_valid():
             u_form.save()
             p_form.save()
+            # If profile was changed to non-student, ensure grade and courses are cleared
+            if request.user.profile.user_type != 'student':
+                request.user.profile.grade = ''
+                try:
+                    request.user.profile.courses.clear()
+                except Exception:
+                    pass
+                request.user.profile.save()
             messages.success(request, 'Your account has been updated!')
             return redirect('profile')
     else:

@@ -1,0 +1,31 @@
+/* Site main styles (added profile card/layout styles) */
+
+/* Ensure profile cards are a consistent minimum height */
+.profile-card {
+    min-height: 140px;
+}
+
+/* Profile list items should align content and have consistent height */
+.profile-list-item {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+/* Make sure profile images inside list items stay consistent */
+.profile-list-item img.rounded-circle {
+    height: 36px;
+    width: 36px;
+    object-fit: cover;
+    margin-right: 8px;
+}
+
+/* Ensure cards take full width when used in layout */
+.profile-card {
+    width: 100%;
+}
+
+/* Small responsive tweak: keep buttons and counts from wrapping oddly */
+.d-flex.justify-content-around.flex-wrap > .text-center {
+    min-width: 120px;
+}
