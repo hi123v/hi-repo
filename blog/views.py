@@ -22,8 +22,22 @@ from users.models import Profile
 
 def home(request):
     # If a logged-in user hasn't picked a grade yet, force grade selection first
-    if request.user.is_authenticated and hasattr(request.user, 'profile') and not request.user.profile.grade:
-        return redirect('choose-grade')
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        # If the admin has configured exactly one Grade, prefer that Grade for display
+        try:
+            single_grade_qs = Grade.objects.all()
+            if single_grade_qs.count() == 1:
+                sg = single_grade_qs.first()
+                if request.user.profile.grade != sg.name:
+                    request.user.profile.grade = sg.name
+                    request.user.profile.save()
+            else:
+                # If there are multiple grades and the user hasn't chosen one, force selection
+                if not request.user.profile.grade:
+                    return redirect('choose-grade')
+        except Exception:
+            if not request.user.profile.grade:
+                return redirect('choose-grade')
 
     all_courses = Course.objects.prefetch_related('lessons__tasks').all()
     user_type = None
