@@ -33,9 +33,11 @@
     {% endif %}
 </head>
 <body>
-    {% if user.is_authenticated and user.profile.user_type %}
-        <div class="role-watermark">{{ user.profile.user_type|title }}</div>
-    {% endif %}
+    {% block watermark %}
+        {% if user.is_authenticated and user.profile.user_type %}
+            <div class="role-watermark">{{ user.profile.user_type|title }}</div>
+        {% endif %}
+    {% endblock %}
     <header class="site-header">
         <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
             <div class="container">

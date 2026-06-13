@@ -173,16 +173,125 @@ class CustomLoginView(LoginView):
             messages.error(self.request, f"Account is registered as {user.profile.user_type}. Did you forget your account or would you like to register a {user_type} account?")
             return redirect('register-role', role=user_type)
         # Proceed with normal login (do not overwrite stored profile.user_type on login)
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # After successful login, redirect based on stored profile role when applicable
+        try:
+            if hasattr(user, 'profile') and not user.is_superuser:
+                if user.profile.user_type == 'teacher':
+                    return redirect('teachers')
+                # students and others continue to home (default behavior)
+        except Exception:
+            pass
+        return response
 
 def choose_login(request):
     roles = LoginRole.objects.all()
     return render(request, 'users/login.html', {'roles': roles})
 
 
+def re_register(request, role):
+    """Allow a user to 're-register' into a different role by proving
+    ownership of an existing account (same username, email, and password).
+    This does not remove superuser privileges; superusers keep their access.
+    """
+    error = None
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        # Authenticate credentials
+        user_obj = authenticate(request, username=username, password=password)
+        if user_obj is None:
+            error = 'Invalid username or password.'
+        else:
+            # Verify email matches
+            if (user_obj.email or '').strip().lower() != (email or '').strip().lower():
+                error = 'Email does not match our records for that account.'
+            else:
+                # If superuser, do not change role/profile; just log them in and redirect
+                if user_obj.is_superuser:
+                    login(request, user_obj)
+                    return redirect('teachers' if role == 'teacher' else 'home')
+                # Update profile role
+                try:
+                    if not hasattr(user_obj, 'profile'):
+                        Profile.objects.create(user=user_obj, user_type=role)
+                    else:
+                        user_obj.profile.user_type = role
+                        # If switching away from student, clear grade/courses
+                        if role != 'student':
+                            user_obj.profile.grade = ''
+                            try:
+                                user_obj.profile.courses.clear()
+                            except Exception:
+                                pass
+                        user_obj.profile.save()
+                except Exception:
+                    error = 'Unable to update account role; please contact an administrator.'
+                if not error:
+                    # Log the user in and redirect to appropriate page
+                    login(request, user_obj)
+                    if role == 'teacher':
+                        return redirect('teachers')
+                    return redirect('home')
+    return render(request, 'users/re_register.html', {'role': role, 'error': error})
+
+
+@login_required
 def teachers(request):
-    # Blank page for teachers section — placeholder template
+    # Only allow teachers to view this page. Show role-swap suggestion to others.
+    try:
+        # Allow superusers to access teacher page as well
+        if not (getattr(request.user, 'is_superuser', False) or (hasattr(request.user, 'profile') and request.user.profile.user_type == 'teacher')):
+            return render(request, 'users/role_forbidden.html', {
+                'target_role': 'teacher',
+                'suggest_register_url': '/register/teacher/'
+            })
+    except Exception:
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'teacher',
+            'suggest_register_url': '/register/teacher/'
+        })
     return render(request, 'users/teachers.html')
+
+def is_parent(user):
+    # Treat superusers as parents as well
+    try:
+        return getattr(user, 'is_superuser', False) or (hasattr(user, 'profile') and user.profile.user_type == 'parent')
+    except Exception:
+        return False
+
+
+def parent_required(view_func):
+    """Decorator to restrict access to parent users (superusers allowed)."""
+    return login_required(user_passes_test(is_parent)(view_func))
+
+
+@parent_required
+def parents(request):
+    # Allow parents to view this page. Superusers can also access.
+    try:
+        if not (getattr(request.user, 'is_superuser', False) or (hasattr(request.user, 'profile') and request.user.profile.user_type == 'parent')):
+            return render(request, 'users/role_forbidden.html', {
+                'target_role': 'parent',
+                'suggest_register_url': '/register/parent/'
+            })
+    except Exception:
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'parent',
+            'suggest_register_url': '/register/parent/'
+        })
+    # Provide the same course context as the home/teachers views so parents
+    # can manage and view their selected courses.
+    courses = []
+    try:
+        if request.user.is_authenticated and hasattr(request.user, 'profile'):
+            user_courses = request.user.profile.courses.prefetch_related('lessons__tasks').all()
+            if user_courses.exists():
+                courses = user_courses
+    except Exception:
+        courses = []
+    return render(request, 'users/parents.html', {'courses': courses})
 
 @login_required
 def placement_quiz(request):
@@ -209,7 +318,9 @@ def membership(request):
     return render(request, 'users/membership.html')
 
 def is_teacher(user):
-    return hasattr(user, 'profile') and user.profile.user_type == 'teacher'
+    # Treat superusers as teachers as well
+    return getattr(user, 'is_superuser', False) or (hasattr(user, 'profile') and user.profile.user_type == 'teacher')
+
 
 @login_required
 @user_passes_test(is_teacher)
@@ -351,6 +462,22 @@ def user_profile(request, username):
     if user_obj == request.user:
         # Redirect to own editable profile
         return redirect('profile')
+
+    # Prevent cross-role viewing: teachers should not view student pages, and students shouldn't view teacher-only pages.
+    try:
+        if hasattr(user_obj, 'profile') and hasattr(request.user, 'profile'):
+            if user_obj.profile.user_type == 'student' and request.user.profile.user_type == 'teacher':
+                return render(request, 'users/role_forbidden.html', {
+                    'target_role': 'student',
+                    'suggest_register_url': '/register/student/'
+                })
+            if user_obj.profile.user_type == 'teacher' and request.user.profile.user_type == 'student':
+                return render(request, 'users/role_forbidden.html', {
+                    'target_role': 'teacher',
+                    'suggest_register_url': '/register/teacher/'
+                })
+    except Exception:
+        pass
 
     # Gather similar context but read-only
     courses = Course.objects.filter(lessons__tasks__completedtask__user=user_obj).distinct()

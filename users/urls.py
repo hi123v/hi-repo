@@ -6,6 +6,7 @@ from .views import CustomLoginView
 urlpatterns = [
     path('register/', views.register, name='register'),
     path('register/<str:role>/', views.register, name='register-role'),
+    path('register/switch/<str:role>/', views.re_register, name='re-register'),
     path('profile/', views.profile, name='profile'),  # <-- use lowercase 'profile'
     path('user/<str:username>/', views.user_profile, name='user-profile'),
     path('friend-request/send/<str:username>/', views.send_friend_request, name='send-friend-request'),
@@ -19,6 +20,7 @@ urlpatterns = [
     path('logout/', views.custom_logout_view, name='logout'),
     path('student-login/', views.student_login, name='student-login'),
     path('teachers/', views.teachers, name='teachers'),
+    path('parents/', views.parents, name='parents'),
     path('placement-quiz/', views.placement_quiz, name='placement-quiz'),
     path('membership/', views.membership, name='membership'),
     path('class-management/', views.class_management, name='class-management'),

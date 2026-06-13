@@ -21,6 +21,12 @@ from django.contrib.auth import get_user_model
 from users.models import Profile
 
 def home(request):
+    # Redirect teachers to the teachers dashboard
+    try:
+        if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.user_type == 'teacher':
+            return redirect('teachers')
+    except Exception:
+        pass
     # If a logged-in user hasn't picked a grade yet, force grade selection first
     if request.user.is_authenticated and hasattr(request.user, 'profile'):
         # If the admin has configured exactly one Grade, prefer that Grade for display

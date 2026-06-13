@@ -1,0 +1,52 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3>Access Restricted</h3>
+                    <p class="lead">You don't have permission to view this page.</p>
+                    <p>Choose one of the options below:</p>
+                    <div class="mb-3">
+                        <a href="{% url 'register-role' target_role %}" class="btn btn-outline-primary mr-2">Create a new {{ target_role|title }} account</a>
+                        <a href="{% url 're-register' target_role %}" class="btn btn-primary mr-2">I already have an account — switch to {{ target_role|title }}</a>
+                        <a href="/" class="btn btn-secondary" id="backBtn">Go back</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!-- Bootstrap modal for role suggestion -->
+                <div class="modal fade" id="roleModal" tabindex="-1" role="dialog" aria-labelledby="roleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="roleModalLabel">Change Account Role</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <p>Would you like to register as a <strong>{{ target_role|title }}</strong>?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="{% url 'register-role' target_role %}" class="btn btn-outline-primary">Create new {{ target_role|title }}</a>
+                                <a href="{% url 're-register' target_role %}" class="btn btn-primary">I already have an account — switch</a>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    window.addEventListener('DOMContentLoaded', function(){
+                        setTimeout(function(){
+                            $('#roleModal').modal('show');
+                        }, 100);
+                    });
+                </script>
+{% endblock %}

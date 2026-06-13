@@ -2,7 +2,7 @@
 
 {% block content %}
     {% block watermark %}{% endblock %}
-    <h2>Welcome teacher</h2>
+    <h2>Welcome parent</h2>
     
     <style>
         .course-btn {
@@ -62,7 +62,7 @@
                     <div class="card-body">
                         <h4 class="card-title mb-3">Your Info</h4>
                         <p><strong>Name:</strong> {{ request.user.get_full_name|default:request.user.username }}</p>
-                        <p><strong>Role:</strong>Teacher</p>
+                        <p><strong>Role:</strong>Parent</p>
                         <p><strong>Points:</strong> {{ request.user.profile.points }}</p>
                     </div>
                 </div>
