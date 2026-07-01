@@ -1,0 +1,48 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<h2>Class Dashboard: {{ course.name }}</h2>
+<div class="container">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5>Overview</h5>
+          <p>{{ course.description|default:'No description' }}</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <a class="card card-body text-center" href="{% url 'class-students' course.pk %}">Students</a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a class="card card-body text-center" href="{% url 'class-analytics' course.pk %}">Analytics</a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a class="card card-body text-center" href="{% url 'class-profile' course.pk %}">Class Profile</a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a class="card card-body text-center" href="{% url 'class-points' course.pk %}">Class Points</a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a class="card card-body text-center" href="{% url 'class-tasks' course.pk %}">Task Manager</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5>Quick Links</h5>
+          <ul class="list-unstyled">
+            <li><a href="{% url 'class-students' course.pk %}">Students</a></li>
+            <li><a href="{% url 'class-analytics' course.pk %}">Analytics</a></li>
+            <li><a href="{% url 'class-profile' course.pk %}">Class Profile</a></li>
+            <li><a href="{% url 'class-points' course.pk %}">Class Points</a></li>
+            <li><a href="{% url 'class-tasks' course.pk %}">Task Manager</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

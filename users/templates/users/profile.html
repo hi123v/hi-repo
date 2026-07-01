@@ -62,6 +62,38 @@
                                         {% endfor %}
                                         </ul>
                                     {% endif %}
+                                    {% if accepted_teachers %}
+                                        <h6>Your Teachers</h6>
+                                        <ul class="list-group mb-2">
+                                        {% for t in accepted_teachers %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center profile-list-item">
+                                                <div>
+                                                    <img src="{{ t.profile.image.url }}" class="rounded-circle" style="height:36px;width:36px;margin-right:8px;"> 
+                                                    <a href="{% url 'user-profile' t.username %}">{{ t.get_full_name|default:t.username }}</a>
+                                                </div>
+                                                <div>
+                                                    <span class="badge badge-secondary">Teacher</span>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    {% if pending_teacher_invites %}
+                                        <h6>Teacher Invites</h6>
+                                        <ul class="list-group">
+                                        {% for invite in pending_teacher_invites %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center profile-list-item">
+                                                <div>
+                                                    <strong>{{ invite.teacher.get_full_name|default:invite.teacher.username }}</strong>
+                                                    <div class="text-muted">Invite expires at {{ invite.expires_at|date:"SHORT_DATETIME_FORMAT" }}</div>
+                                                </div>
+                                                <div>
+                                                    <a class="btn btn-sm btn-success" href="{% url 'accept-invite' invite.token %}">Accept</a>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% endif %}
@@ -166,4 +198,114 @@
             </div>
         </form>
     </div>
+    <!-- Invite Popup Modal -->
+    <div class="modal fade" id="invitePopupModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Class Invite</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="inviteText">Someone has invited you to their class.</p>
+                    <div id="inviteCountdown" class="text-muted small"></div>
+                </div>
+                <div class="modal-footer">
+                    <form id="inviteAcceptForm" method="post" style="display:inline-block; margin:0;">
+                        {% csrf_token %}
+                        <button id="inviteAccept" class="btn btn-success" type="submit">Sure, I'm in</button>
+                    </form>
+                    <form id="inviteDeclineForm" method="post" style="display:inline-block; margin:0;">
+                        {% csrf_token %}
+                        <button id="inviteDecline" class="btn btn-secondary" type="submit">No thank you</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        let activeToken = null;
+        let countdownInterval = null;
+        const poll = function(){
+            fetch('{% url "poll-invites" %}').then(r=>r.json()).then(j=>{
+                if (!j || !j.invites || j.invites.length === 0) return;
+                const inv = j.invites[0];
+                if (activeToken === inv.token) return;
+                activeToken = inv.token;
+                // show modal
+                document.getElementById('inviteText').textContent = inv.teacher + ' has invited you to their class.';
+                const acceptUrl = '{% url "accept-invite" "00000000-0000-0000-0000-000000000000" %}'.replace('00000000-0000-0000-0000-000000000000', inv.token);
+                const declineUrl = '{% url "decline-invite" "00000000-0000-0000-0000-000000000000" %}'.replace('00000000-0000-0000-0000-000000000000', inv.token);
+                document.getElementById('inviteAcceptForm').action = acceptUrl;
+                document.getElementById('inviteDeclineForm').action = declineUrl;
+                $('#invitePopupModal').modal('show');
+                // start countdown
+                const expires = new Date(inv.expires_at).getTime();
+                if (countdownInterval) clearInterval(countdownInterval);
+                countdownInterval = setInterval(function(){
+                    const now = Date.now();
+                    const rem = Math.max(0, Math.floor((expires - now)/1000));
+                    document.getElementById('inviteCountdown').textContent = 'Expires in ' + rem + 's';
+                    if (rem <= 0) {
+                        clearInterval(countdownInterval);
+                        $('#invitePopupModal').modal('hide');
+                        activeToken = null;
+                    }
+                }, 300);
+            }).catch(e=>{});
+        };
+        // poll every 3 seconds
+        setInterval(poll, 3000);
+        // also poll on page load
+        poll();
+    })();
+    // Submit forms via fetch with X-CSRFToken header to avoid CSRF issues
+    (function(){
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        const submitWithFetch = function(form){
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                const url = form.action;
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                    }
+                }).then(r=>{
+                    if (r.ok) {
+                        // hide modal and refresh page to show teacher card
+                        $('#invitePopupModal').modal('hide');
+                        location.reload();
+                    } else {
+                        r.text().then(t=>{ alert('Request failed: ' + r.status); });
+                    }
+                }).catch(err=>{ console.error(err); alert('Request error'); });
+            });
+        };
+        const f1 = document.getElementById('inviteAcceptForm');
+        const f2 = document.getElementById('inviteDeclineForm');
+        if (f1) submitWithFetch(f1);
+        if (f2) submitWithFetch(f2);
+    })();
+    </script>
 {% endblock content %}

@@ -51,7 +51,7 @@ urlpatterns = [
     path('quests/', include('quests.urls')),
     path('', include('blog.urls')),
     path('users/', include('users.urls')),
-    path('login/', auth_views.LoginView.as_view(template_name='users/login_form.html'), name='login'),
+    path('login/', CustomLoginView.as_view(template_name='users/login_form.html'), name='login'),
 ]
 
 if settings.DEBUG:

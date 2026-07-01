@@ -3,15 +3,19 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, StudentLoginForm, PlacementQuizForm, TeacherLoginForm
 from .models import StudentLoginCode, Profile, LoginRole
+from .models import FriendRequest, Friendship, StreakRequest, TeacherInvite, TeacherStudent, TeacherAction, TeacherCourse
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Q
-from blog.models import Course, Grade as GradeModel
+from django.db import models
+from blog.models import Course, Grade as GradeModel, Lesson, Task
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .models import FriendRequest, Friendship, StreakRequest
+from django.http import JsonResponse
+from django.urls import reverse
+from django.utils.dateformat import format as df_format
 
 def register(request, role=None):
     if request.method == 'POST':
@@ -154,7 +158,7 @@ def teacher_login(request):
                         form.add_error(None, f"Account is registered as {other_role}. Did you forget your account, or would you like to register a teacher account? Register here: /register/teacher/")
                     else:
                         login(request, user_auth)
-                        return redirect('membership')
+                        return redirect('teachers')
     else:
         form = TeacherLoginForm()
     return render(request, 'users/teacher_login.html', {'form': form})
@@ -168,18 +172,24 @@ class CustomLoginView(LoginView):
         # Ensure the authenticated user's stored role matches the requested login role.
         user = form.get_user()
         user_type = self.request.POST.get('user_type') or self.request.GET.get('user_type')
-        # Allow superuser to login to any role view regardless of stored profile.user_type
         if user_type and hasattr(user, 'profile') and not user.is_superuser and user.profile.user_type != user_type:
             messages.error(self.request, f"Account is registered as {user.profile.user_type}. Did you forget your account or would you like to register a {user_type} account?")
             return redirect('register-role', role=user_type)
-        # Proceed with normal login (do not overwrite stored profile.user_type on login)
+
         response = super().form_valid(form)
-        # After successful login, redirect based on stored profile role when applicable
+
+        # Preserve explicit next redirects.
+        if self.request.GET.get('next') or self.request.POST.get('next'):
+            return response
+
         try:
             if hasattr(user, 'profile') and not user.is_superuser:
                 if user.profile.user_type == 'teacher':
                     return redirect('teachers')
-                # students and others continue to home (default behavior)
+                if user.profile.user_type == 'student':
+                    return redirect('students')
+                if user.profile.user_type == 'parent':
+                    return redirect('parents')
         except Exception:
             pass
         return response
@@ -252,7 +262,421 @@ def teachers(request):
             'target_role': 'teacher',
             'suggest_register_url': '/register/teacher/'
         })
-    return render(request, 'users/teachers.html')
+    # Provide teacher-specific context: accepted students and pending invites
+    students = []
+    pending_invites = []
+    all_courses = []
+    teacher_courses = []
+    try:
+        students = [rel.student for rel in TeacherStudent.objects.filter(teacher=request.user, accepted=True).select_related('student')]
+        pending_invites = TeacherInvite.objects.filter(teacher=request.user, accepted=False)
+        all_courses = Course.objects.all()
+        teacher_courses = [tc.course for tc in TeacherCourse.objects.filter(teacher=request.user).select_related('course')]
+    except Exception:
+        students = []
+        pending_invites = []
+        all_courses = []
+        teacher_courses = []
+    pending_token = request.GET.get('pending_invite')
+    return render(request, 'users/teachers.html', {
+        'students': students,
+        'pending_invites': pending_invites,
+        'all_courses': all_courses,
+        'teacher_courses': teacher_courses,
+        'pending_invite': pending_token
+    })
+
+
+@login_required
+def add_student(request):
+    if request.method != 'POST':
+        return redirect('teachers')
+    username = request.POST.get('username', '').strip()
+    password = request.POST.get('password', '').strip()
+    email = request.POST.get('email', '').strip()
+    # optional course id to redirect back to class students page
+    course_id = request.POST.get('course_id') or request.GET.get('course_id')
+    if not username or not password or not email:
+        messages.error(request, 'Username, password and email are required.')
+        if course_id:
+            return redirect('class-students', course_id=course_id)
+        return redirect('teachers')
+    # Find or create the student user
+    user_obj, created = User.objects.get_or_create(username=username, defaults={'email': email})
+    if created:
+        user_obj.set_password(password)
+        user_obj.email = email
+        user_obj.save()
+        # ensure profile exists and is student
+        try:
+            if not hasattr(user_obj, 'profile'):
+                Profile.objects.create(user=user_obj, user_type='student')
+            else:
+                user_obj.profile.user_type = 'student'
+                user_obj.profile.save()
+        except Exception:
+            pass
+    # Create invite
+    try:
+        # Avoid duplicate pending invites
+        existing = TeacherInvite.objects.filter(teacher=request.user, student=user_obj, accepted=False).first()
+        if existing and not existing.is_expired():
+            messages.info(request, 'An invite is already pending for that student.')
+            if course_id:
+                return redirect('class-students', course_id=course_id)
+            return redirect('teachers')
+        invite = TeacherInvite.objects.create(teacher=request.user, student=user_obj)
+        messages.success(request, f'Invite sent to {user_obj.username}. They have 1 minute to accept.')
+        # Redirect to teachers view with pending token so teacher sees loading state
+        target = f"{reverse('teachers')}?pending_invite={invite.token}"
+        if course_id:
+            # send teacher back to class students page instead
+            return redirect('class-students', course_id=course_id)
+        return redirect(target)
+    except Exception:
+        messages.error(request, 'Unable to create invite; contact admin.')
+    return redirect('teachers')
+
+
+def is_teacher(user):
+    # Treat superusers as teachers as well
+    return getattr(user, 'is_superuser', False) or (hasattr(user, 'profile') and user.profile.user_type == 'teacher')
+
+
+@login_required
+@user_passes_test(is_teacher)
+def add_class(request):
+    if request.method != 'POST':
+        return redirect('teachers')
+    name = request.POST.get('name', '').strip()
+    subject = request.POST.get('subject', '').strip()
+    grade = request.POST.get('grade', '').strip()
+    if not subject or not grade:
+        messages.error(request, 'Subject and grade are required.')
+        return redirect('teachers')
+    try:
+        # create a Course entry to represent the class
+        description = f'{grade} • {subject}'
+        course_name = name or f'{grade} {subject}'
+        course = Course.objects.create(name=course_name, description=description)
+        # associate to teacher
+        TeacherCourse.objects.get_or_create(teacher=request.user, course=course)
+        messages.success(request, f'Class "{course.name}" created.')
+        return redirect('teachers')
+    except Exception:
+        messages.error(request, 'Unable to create class.')
+        return redirect('teachers')
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_dashboard(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    return render(request, 'users/class_dashboard.html', {'course': course})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_students(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    # ensure teacher has added this class
+    if not TeacherCourse.objects.filter(teacher=request.user, course=course).exists():
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'teacher',
+            'suggest_register_url': '/register/teacher/'
+        })
+    if request.method == 'POST':
+        # delegate to add_student logic but stay on this page
+        # extract fields and create invite
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        email = request.POST.get('email', '').strip()
+        if not username or not password or not email:
+            messages.error(request, 'Username, password and email are required.')
+            return redirect('class-students', course_id=course_id)
+        user_obj, created = User.objects.get_or_create(username=username, defaults={'email': email})
+        if created:
+            user_obj.set_password(password)
+            user_obj.email = email
+            user_obj.save()
+            try:
+                if not hasattr(user_obj, 'profile'):
+                    Profile.objects.create(user=user_obj, user_type='student')
+                else:
+                    user_obj.profile.user_type = 'student'
+                    user_obj.profile.save()
+            except Exception:
+                pass
+        try:
+            existing = TeacherInvite.objects.filter(teacher=request.user, student=user_obj, accepted=False).first()
+            if existing and not existing.is_expired():
+                messages.info(request, 'An invite is already pending for that student.')
+                return redirect('class-students', course_id=course_id)
+            invite = TeacherInvite.objects.create(teacher=request.user, student=user_obj)
+            messages.success(request, f'Invite sent to {user_obj.username}. They have 1 minute to accept.')
+            return redirect('class-students', course_id=course_id)
+        except Exception:
+            messages.error(request, 'Unable to create invite; contact admin.')
+            return redirect('class-students', course_id=course_id)
+    # GET: show students for this teacher who are enrolled in this course
+    students_qs = TeacherStudent.objects.filter(teacher=request.user, accepted=True, student__profile__courses=course).select_related('student')
+    students = [rel.student for rel in students_qs]
+    pending_invites = TeacherInvite.objects.filter(teacher=request.user, accepted=False)
+    return render(request, 'users/class_students.html', {'course': course, 'students': students, 'pending_invites': pending_invites})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_analytics(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    return render(request, 'users/class_analytics.html', {'course': course})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_profile_page(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    return render(request, 'users/class_profile.html', {'course': course})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_points_page(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    return render(request, 'users/class_points.html', {'course': course})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_task_manager(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    # ensure teacher has added this class
+    if not TeacherCourse.objects.filter(teacher=request.user, course=course).exists():
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'teacher',
+            'suggest_register_url': '/register/teacher/'
+        })
+    if request.method == 'POST':
+        lesson_name = request.POST.get('lesson_name', '').strip()
+        task_name = request.POST.get('task_name', '').strip()
+        template_type = request.POST.get('template_type', 'none')
+        template_data = request.POST.get('template_data', '').strip()
+        if not lesson_name or not task_name:
+            messages.error(request, 'Lesson name and task name are required.')
+            return redirect('class-tasks', course_id=course_id)
+        try:
+            lesson, _ = Lesson.objects.get_or_create(course=course, name=lesson_name)
+            Task.objects.create(lesson=lesson, name=task_name, template_type=template_type, template_data=template_data)
+            messages.success(request, 'Task created.')
+        except Exception:
+            messages.error(request, 'Unable to create task.')
+        return redirect('class-tasks', course_id=course_id)
+    # GET: show tasks for course
+    lessons = course.lessons.prefetch_related('tasks').all()
+    students = [rel.student for rel in TeacherStudent.objects.filter(teacher=request.user, accepted=True, student__profile__courses=course).select_related('student')]
+    return render(request, 'users/class_task_manager.html', {'course': course, 'lessons': lessons, 'students': students})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def toggle_teacher_class(request, course_id):
+    if request.method != 'POST':
+        return redirect('teachers')
+    course = get_object_or_404(Course, pk=course_id)
+    try:
+        tc = TeacherCourse.objects.filter(teacher=request.user, course=course).first()
+        if tc:
+            tc.delete()
+            messages.info(request, f'Removed class {course.name} from your dashboard.')
+        else:
+            TeacherCourse.objects.create(teacher=request.user, course=course)
+            messages.success(request, f'Added class {course.name} to your dashboard.')
+    except Exception:
+        messages.error(request, 'Unable to update classes.')
+    return redirect(request.META.get('HTTP_REFERER') or 'teachers')
+
+
+@login_required
+def accept_invite(request, token):
+    # Accept an invite from a teacher. Only allow POST to change state.
+    if request.method != 'POST':
+        return redirect('profile')
+    try:
+        invite = get_object_or_404(TeacherInvite, token=token)
+    except Exception:
+        messages.error(request, 'Invite not found.')
+        return redirect('profile')
+    # Only the invited student may accept
+    if invite.student != request.user:
+        messages.error(request, 'This invite is not for your account.')
+        return redirect('profile')
+    if invite.accepted:
+        messages.info(request, 'Invite already accepted.')
+        return redirect('profile')
+    if invite.is_expired():
+        messages.error(request, 'Invite has expired.')
+        return redirect('profile')
+    # mark accepted and create TeacherStudent relation
+    invite.accepted = True
+    invite.save()
+    ts, created = TeacherStudent.objects.get_or_create(teacher=invite.teacher, student=invite.student)
+    ts.accepted = True
+    ts.accepted_at = timezone.now()
+    ts.save()
+    messages.success(request, f'You are now connected to teacher {invite.teacher.get_full_name() or invite.teacher.username}.')
+    return redirect('profile')
+
+
+@login_required
+def teacher_student_detail(request, username):
+    student = get_object_or_404(User, username=username)
+    # Ensure caller is a teacher
+    try:
+        if not is_teacher(request.user):
+            return render(request, 'users/role_forbidden.html', {
+                'target_role': 'teacher',
+                'suggest_register_url': '/register/teacher/'
+            })
+    except Exception:
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'teacher',
+            'suggest_register_url': '/register/teacher/'
+        })
+    # require existing accepted relation
+    rel = TeacherStudent.objects.filter(teacher=request.user, student=student, accepted=True).first()
+    if not rel:
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'student',
+            'suggest_register_url': '/register/student/'
+        })
+    # Gather profile info (exclude password)
+    profile = student.profile
+    friends = Friendship.objects.filter(models.Q(user1=student) | models.Q(user2=student))
+    # Quests: try to fetch from quests app if available
+    quests = []
+    try:
+        from quests.models import Quest
+        quests = Quest.objects.filter(user=student)
+    except Exception:
+        quests = []
+    actions = TeacherAction.objects.filter(teacher=request.user, student=student).order_by('-created_at')
+    medals = actions.filter(action_type=TeacherAction.ActionType.MEDAL)
+    emojis = actions.filter(action_type=TeacherAction.ActionType.EMOJI)
+    all_courses = Course.objects.all()
+    return render(request, 'users/teacher_student_detail.html', {
+        'student': student,
+        'profile': profile,
+        'friends': friends,
+        'quests': quests,
+        'medals': medals,
+        'emojis': emojis,
+        'actions': actions,
+        'all_courses': all_courses,
+    })
+
+
+@login_required
+def teacher_action(request, username):
+    # Ensure caller is a teacher
+    try:
+        if not is_teacher(request.user):
+            return render(request, 'users/role_forbidden.html', {
+                'target_role': 'teacher',
+                'suggest_register_url': '/register/teacher/'
+            })
+    except Exception:
+        return render(request, 'users/role_forbidden.html', {
+            'target_role': 'teacher',
+            'suggest_register_url': '/register/teacher/'
+        })
+    if request.method != 'POST':
+        return redirect('teacher-student-detail', username=username)
+    student = get_object_or_404(User, username=username)
+    rel = TeacherStudent.objects.filter(teacher=request.user, student=student, accepted=True).first()
+    if not rel:
+        messages.error(request, 'You are not connected to that student.')
+        return redirect('teachers')
+    action_type = request.POST.get('action_type')
+    # Points adjustments
+    if action_type == 'points':
+        delta = int(request.POST.get('delta', '0'))
+        TeacherAction.objects.create(teacher=request.user, student=student, action_type=TeacherAction.ActionType.POINTS, points_delta=delta)
+        try:
+            student.profile.points = max(0, student.profile.points + delta)
+            student.profile.save()
+        except Exception:
+            pass
+        messages.success(request, f'Adjusted points by {delta} for {student.username}.')
+    elif action_type == 'medal':
+        medal = request.POST.get('medal')
+        TeacherAction.objects.create(teacher=request.user, student=student, action_type=TeacherAction.ActionType.MEDAL, medal=medal)
+        messages.success(request, f'Gave {medal} medal to {student.username}.')
+    elif action_type == 'emoji':
+        emoji = request.POST.get('emoji')
+        TeacherAction.objects.create(teacher=request.user, student=student, action_type=TeacherAction.ActionType.EMOJI, emoji=emoji)
+        messages.success(request, f'Sent {emoji} to {student.username}.')
+    elif action_type == 'assign_course':
+        course_id = request.POST.get('course_id')
+        try:
+            course = Course.objects.get(pk=int(course_id))
+            # toggle membership
+            if course in student.profile.courses.all():
+                student.profile.courses.remove(course)
+                messages.success(request, f'Removed course {course.name} from {student.username}.')
+            else:
+                student.profile.courses.add(course)
+                messages.success(request, f'Assigned course {course.name} to {student.username}.')
+        except Exception:
+            messages.error(request, 'Invalid course selection.')
+    return redirect('teacher-student-detail', username=username)
+
+
+@login_required
+def poll_invites(request):
+    # Return pending invites for current user as JSON
+    invites = TeacherInvite.objects.filter(student=request.user, accepted=False)
+    data = []
+    for inv in invites:
+        if inv.is_expired():
+            continue
+        data.append({
+            'teacher': inv.teacher.get_full_name() or inv.teacher.username,
+            'token': str(inv.token),
+            'expires_at': inv.expires_at.isoformat(),
+        })
+    return JsonResponse({'invites': data})
+
+
+@login_required
+def invite_status(request, token):
+    try:
+        inv = get_object_or_404(TeacherInvite, token=token)
+    except Exception:
+        return JsonResponse({'status': 'not_found'})
+    if inv.accepted:
+        return JsonResponse({'status': 'accepted'})
+    if inv.is_expired():
+        return JsonResponse({'status': 'expired'})
+    return JsonResponse({'status': 'pending'})
+
+
+@login_required
+def decline_invite(request, token):
+    if request.method != 'POST':
+        return redirect('profile')
+    try:
+        inv = get_object_or_404(TeacherInvite, token=token)
+    except Exception:
+        messages.error(request, 'Invite not found.')
+        return redirect('profile')
+    if inv.student != request.user:
+        messages.error(request, 'This invite is not for your account.')
+        return redirect('profile')
+    # expire the invite
+    inv.expires_at = timezone.now()
+    inv.save()
+    messages.info(request, 'Invite declined.')
+    return redirect('profile')
 
 def is_parent(user):
     # Treat superusers as parents as well
@@ -379,8 +803,14 @@ def profile(request):
     # Pending requests for current user
     pending_friend_requests = FriendRequest.objects.filter(to_user=request.user)
     pending_streak_requests = StreakRequest.objects.filter(to_user=request.user)
+    pending_teacher_invites = TeacherInvite.objects.filter(student=request.user, accepted=False)
+    # Teachers the student has accepted
+    accepted_teachers_qs = TeacherStudent.objects.filter(student=request.user, accepted=True).select_related('teacher')
+    accepted_teachers = [ts.teacher for ts in accepted_teachers_qs]
     context['pending_friend_requests'] = pending_friend_requests
     context['pending_streak_requests'] = pending_streak_requests
+    context['pending_teacher_invites'] = pending_teacher_invites
+    context['accepted_teachers'] = accepted_teachers
     return render(request, 'users/profile.html', context)
 
 

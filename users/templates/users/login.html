@@ -10,6 +10,8 @@
                     <h3 class="card-title mb-4">{{ role.get_name_display }}</h3>
                     {% if role.name == "student" %}
                         <a href="{% url 'student-login' %}" class="btn btn-light btn-lg w-75 d-flex justify-content-center align-items-center" style="height: 350px;">
+                    {% elif role.name == "teacher" %}
+                        <a href="{% url 'teacher-login' %}" class="btn btn-light btn-lg w-75 d-flex justify-content-center align-items-center" style="height: 350px;">
                     {% else %}
                         <a href="{% url 'login' %}?user_type={{ role.name }}" class="btn btn-light btn-lg w-75 d-flex justify-content-center align-items-center" style="height: 350px;">
                     {% endif %}

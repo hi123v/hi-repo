@@ -47,13 +47,13 @@
                     <div class="bar"></div>
                     <div class="bar"></div>
                 </button>
-                <a class="navbar-brand mr-4" href="{% url 'home' %}">Quest-ly</a>
+                <a class="navbar-brand mr-4" href="{{ home_url }}">Quest-ly</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarToggle">
                     <div class="navbar-nav mr-auto">
-                        <a class="nav-item nav-link" href="{% url 'home' %}">Home</a>
+                        <a class="nav-item nav-link" href="{{ home_url }}">Home</a>
                             <a class="nav-item nav-link" href="{% url 'chat' %}">Chat</a>
                         <a class="nav-item nav-link" href="{% url 'blog-about' %}">About</a>
                         <a class="nav-item nav-link" href="{% url 'games' %}">Games</a>
@@ -79,7 +79,7 @@
                 <div class="position-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{% url 'home' %}">
+                            <a class="nav-link active" aria-current="page" href="{{ home_url }}">
                                 Home
                             </a>
                         </li>

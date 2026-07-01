@@ -16,7 +16,8 @@ from . import views
 from users import views as users_views
 
 urlpatterns = [
-    path('', home, name='home'),  # Home page   
+    path('', views.role_home_redirect, name='home'),  # Home redirects by role
+    path('students/', home, name='students'),
     path('choose-grade/', views.choose_grade, name='choose-grade'),
     path('confirm-grade/<int:grade_id>/', views.confirm_grade, name='confirm-grade'),
     path('chat/', PostListView.as_view(), name='chat'),  

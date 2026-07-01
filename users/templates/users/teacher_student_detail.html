@@ -1,0 +1,154 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Student: {{ student.get_full_name|default:student.username }}</h2>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Profile</h5>
+                    {% if profile.sprite %}
+                        <img src="{{ profile.sprite.url }}" style="height:80px; width:auto;">
+                    {% endif %}
+                    <p><strong>Points:</strong> {{ profile.points }}</p>
+                    <p><strong>Friends:</strong> {{ friends.count }}</p>
+                    <p><strong>Quests:</strong> {{ quests|length }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Assign / Remove Courses</h5>
+                    <form method="post" action="{% url 'teacher-student-action' student.username %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="assign_course">
+                        <div class="form-row">
+                            <div class="col">
+                                <select name="course_id" class="form-control">
+                                    {% for c in all_courses %}
+                                        <option value="{{ c.id }}">{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary">Toggle Course</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Adjust Points</h5>
+                    <form method="post" action="{% url 'teacher-student-action' student.username %}" class="d-flex">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="points">
+                        <button name="delta" value="1" class="btn btn-outline-success mr-2">+1</button>
+                        <button name="delta" value="3" class="btn btn-outline-success mr-2">+3</button>
+                        <button name="delta" value="5" class="btn btn-outline-success mr-2">+5</button>
+                        <button name="delta" value="-1" class="btn btn-outline-danger mr-2">-1</button>
+                        <button name="delta" value="-3" class="btn btn-outline-danger mr-2">-3</button>
+                        <button name="delta" value="-5" class="btn btn-outline-danger">-5</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Give Medal</h5>
+                    <form method="post" action="{% url 'teacher-student-action' student.username %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="medal">
+                        <button name="medal" value="bronze" class="btn btn-warning mr-2">Bronze</button>
+                        <button name="medal" value="silver" class="btn btn-secondary mr-2">Silver</button>
+                        <button name="medal" value="gold" class="btn btn-primary">Gold</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Send Emoji / Confetti</h5>
+                    <form method="post" action="{% url 'teacher-student-action' student.username %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="emoji">
+                        <button name="emoji" value="happy" class="btn btn-light mr-2">😊</button>
+                        <button name="emoji" value="thumbs" class="btn btn-light mr-2">👍</button>
+                        <button name="emoji" value="confetti" class="btn btn-light">🎉</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5>Teacher Congratulations</h5>
+                    {% if medals.exists %}
+                        <ul>
+                            {% for m in medals %}
+                                <li>{{ m.medal|capfirst }} — {{ m.created_at|date:"SHORT_DATETIME_FORMAT" }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No congratulations yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Recent Actions</h5>
+                    <ul>
+                        {% for a in actions|slice:10 %}
+                            <li>
+                                {% if a.action_type == 'points' %}
+                                    Points: {{ a.points_delta }} ({{ a.created_at|date:"SHORT_DATETIME_FORMAT" }})
+                                {% elif a.action_type == 'medal' %}
+                                    Medal: {{ a.medal }}
+                                {% else %}
+                                    Emoji: {{ a.emoji }}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Simple confetti element */
+.confetti {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    pointer-events: none;
+    font-size: 48px;
+    animation: rise 1.2s ease-out forwards;
+}
+@keyframes rise {
+    0% { bottom: 0; transform: translateX(-50%) scale(0.6); opacity: 1 }
+    60% { bottom: 45%; transform: translateX(-50%) scale(1.1); opacity: 1 }
+    100% { bottom: 60%; transform: translateX(-50%) scale(0.9); opacity: 0 }
+}
+</style>
+
+<script>
+// If the latest emoji action is confetti, show the animation once
+(function(){
+    {% if emojis and emojis|first and emojis|first.emoji == 'confetti' %}
+        var el = document.createElement('div');
+        el.className = 'confetti';
+        el.textContent = '🎉';
+        document.body.appendChild(el);
+        setTimeout(function(){ el.remove(); }, 1400);
+    {% endif %}
+})();
+</script>
+
+{% endblock %}

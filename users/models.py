@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from PIL import Image
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from datetime import timedelta
+import uuid
 
 
 
@@ -118,3 +121,79 @@ class StreakRequest(models.Model):
 
     def __str__(self):
         return f"StreakRequest from {self.from_user} to {self.to_user}"
+
+
+class TeacherStudent(models.Model):
+    teacher = models.ForeignKey(User, related_name='teacher_students', on_delete=models.CASCADE)
+    student = models.ForeignKey(User, related_name='student_teachers', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+    accepted_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        unique_together = (('teacher', 'student'),)
+
+    def __str__(self):
+        return f"{self.teacher.username} -> {self.student.username}"
+
+
+class TeacherInvite(models.Model):
+    teacher = models.ForeignKey(User, related_name='sent_teacher_invites', on_delete=models.CASCADE)
+    student = models.ForeignKey(User, related_name='received_teacher_invites', on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    accepted = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=1)
+        super().save(*args, **kwargs)
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"Invite {self.teacher.username} -> {self.student.username} (accepted={self.accepted})"
+
+
+class TeacherAction(models.Model):
+    class ActionType(models.TextChoices):
+        POINTS = 'points', 'Points'
+        MEDAL = 'medal', 'Medal'
+        EMOJI = 'emoji', 'Emoji'
+
+    class MedalChoices(models.TextChoices):
+        BRONZE = 'bronze', 'Bronze'
+        SILVER = 'silver', 'Silver'
+        GOLD = 'gold', 'Gold'
+
+    class EmojiChoices(models.TextChoices):
+        HAPPY = 'happy', 'Happy Face'
+        THUMBS = 'thumbs', 'Thumbs Up'
+        CONFETTI = 'confetti', 'Confetti'
+
+    teacher = models.ForeignKey(User, related_name='teacher_actions', on_delete=models.CASCADE)
+    student = models.ForeignKey(User, related_name='student_actions', on_delete=models.CASCADE)
+    action_type = models.CharField(max_length=20, choices=ActionType.choices)
+    points_delta = models.IntegerField(default=0)
+    medal = models.CharField(max_length=20, choices=MedalChoices.choices, blank=True, null=True)
+    emoji = models.CharField(max_length=20, choices=EmojiChoices.choices, blank=True, null=True)
+    message = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.action_type} by {self.teacher.username} -> {self.student.username}"
+
+
+class TeacherCourse(models.Model):
+    """Associate a Course with a teacher (teachers 'add' classes to their dashboard)."""
+    teacher = models.ForeignKey(User, related_name='teacher_courses', on_delete=models.CASCADE)
+    course = models.ForeignKey('blog.Course', related_name='teacher_owners', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (('teacher', 'course'),)
+
+    def __str__(self):
+        return f"{self.teacher.username} -> {self.course.name}"

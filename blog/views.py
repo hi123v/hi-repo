@@ -62,6 +62,23 @@ def home(request):
     })
 
 
+def role_home_redirect(request):
+    """Redirect authenticated users to their role-specific home page."""
+    try:
+        if request.user.is_authenticated and hasattr(request.user, 'profile'):
+            ut = request.user.profile.user_type
+            if ut == 'teacher':
+                return redirect('teachers')
+            if ut == 'parent':
+                return redirect('parents')
+            if ut == 'student':
+                return redirect('students')
+    except Exception:
+        pass
+    # Unauthenticated or unknown role: render the normal courses home
+    return home(request)
+
+
 @login_required
 def manage_courses(request):
     if request.method == 'POST':
