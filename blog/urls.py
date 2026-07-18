@@ -11,6 +11,10 @@ from .views import (
     UserPostListView,
     task_detail,
     complete_task,
+    lesson_planner,
+    create_lesson,
+    edit_lesson,
+    delete_lesson,
 )
 from . import views
 from users import views as users_views
@@ -38,4 +42,9 @@ urlpatterns = [
     path('membership/', users_views.membership, name='membership'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('manage-courses/', views.manage_courses, name='manage-courses'),
+    # Lesson planner URLs
+    path('lessons/planner/', lesson_planner, name='lesson-planner'),
+    path('course/<int:course_id>/lesson/create/', create_lesson, name='create-lesson'),
+    path('lesson/<int:lesson_id>/edit/', edit_lesson, name='edit-lesson'),
+    path('lesson/<int:lesson_id>/delete/', delete_lesson, name='delete-lesson'),
 ]

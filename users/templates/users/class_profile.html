@@ -1,6 +1,67 @@
 {% extends "blog/base.html" %}
 
 {% block content %}
-<h2>Class Profile - {{ course.name }}</h2>
-<p>Placeholder page.</p>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Class Profile - {{ course.name }}</h2>
+      <p class="text-muted mb-0">A simple overview of student load, lesson pacing, and classroom progress.</p>
+    </div>
+    <div>
+      <a href="{% url 'class-dashboard' course.pk %}" class="btn btn-outline-secondary">Back to dashboard</a>
+      <a href="{% url 'teachers' %}" class="btn btn-outline-secondary ml-2">Back to classes</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5>Student overview</h5>
+          <p class="mb-2"><strong>Students enrolled:</strong> {{ student_count }}</p>
+          <p class="mb-2"><strong>Average grade level:</strong> {{ average_grade_level }}</p>
+          <p class="mb-0"><strong>Weekly goal:</strong> {{ weekly_goal }} lessons</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5>Lesson pacing</h5>
+          <p class="mb-2"><strong>Lessons available:</strong> {{ lesson_count }}</p>
+          <p class="mb-2"><strong>Per student per day:</strong> {{ lessons_per_student_per_day }}</p>
+          <p class="mb-0"><strong>Per student per month:</strong> {{ lessons_per_student_per_month }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5>Next focus</h5>
+          <p class="mb-0">Use the teacher lessons area to add new content, then review the student roster and analytics page to track how the class is performing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-body">
+      <h5>Students in this class</h5>
+      {% if students %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+          {% for student in students %}
+            <div class="col">
+              <div class="border rounded p-3 h-100">
+                <strong>{{ student.get_full_name|default:student.username }}</strong><br>
+                <small class="text-muted">{{ student.profile.grade|default:'No grade set' }}</small>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">No students have been added to this class yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django import forms
 from django.db import models
-from .models import Post, Course, Lesson, Task, Grade, SiteSectionItem, Game, Mission, Team, Career, Contact, FAQ
+from .models import Post, Course, Lesson, LessonPreset, Task, Grade, SiteSectionItem, Game, Mission, Team, Career, Contact, FAQ
 from .models import GameAsset
 
 
@@ -35,6 +35,7 @@ class CourseAdmin(admin.ModelAdmin):
 
 admin.site.register(Course, CourseAdmin)
 admin.site.register(Lesson)
+admin.site.register(LessonPreset)
 admin.site.register(Grade)
 
 

@@ -1,94 +1,129 @@
 {% extends "blog/base.html" %}
 
 {% block content %}
-<h2>Task Manager - {{ course.name }}</h2>
-<div class="container">
-	<div class="row">
-		<div class="col-md-8">
-			<div class="card mb-3">
-				<div class="card-body">
-					<h5>Existing Lessons & Tasks</h5>
-					{% if lessons and lessons|length > 0 %}
-						<div class="accordion" id="lessonsAccordion">
-							{% for lesson in lessons %}
-								<div class="card">
-									<div class="card-header" id="heading{{ forloop.counter }}">
-										<h2 class="mb-0">
-											<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}">{{ lesson.name }}</button>
-										</h2>
-									</div>
-									<div id="collapse{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}" data-parent="#lessonsAccordion">
-										<div class="card-body">
-											<ul class="list-group">
-												{% for task in lesson.tasks.all %}
-													<li class="list-group-item d-flex justify-content-between align-items-center">
-														<div>
-															<strong>{{ task.name }}</strong><br>
-															<small>Template: {{ task.template_type }}</small>
-														</div>
-													</li>
-												{% endfor %}
-											</ul>
-										</div>
-									</div>
-								</div>
-							{% endfor %}
-						</div>
-					{% else %}
-						<p class="text-muted">No lessons or tasks yet.</p>
-					{% endif %}
-				</div>
-			</div>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Teacher Lessons - {{ course.name }}</h2>
+      <p class="text-muted mb-0">Add a lesson by hand or use preset bundles for quick class setup.</p>
+    </div>
+    <div>
+      <a href="{% url 'class-dashboard' course.pk %}" class="btn btn-outline-secondary">Back to dashboard</a>
+      <a href="{% url 'teachers' %}" class="btn btn-outline-secondary ml-2">Back to classes</a>
+    </div>
+  </div>
 
-			<div class="card">
-				<div class="card-body">
-					<h5>Add Task</h5>
-					<form method="post" action="{% url 'class-tasks' course.pk %}">
-						{% csrf_token %}
-						<div class="form-group">
-							<label>Lesson name</label>
-							<input class="form-control" name="lesson_name" required>
-						</div>
-						<div class="form-group">
-							<label>Task name</label>
-							<input class="form-control" name="task_name" required>
-						</div>
-						<div class="form-group">
-							<label>Template type</label>
-							<select class="form-control" name="template_type">
-								<option value="none">None</option>
-								<option value="reorder">Reorder</option>
-								<option value="random_click">Random Click</option>
-								<option value="placeholder1">Placeholder 1</option>
-								<option value="placeholder2">Placeholder 2</option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label>Template data (one per line or JSON array)</label>
-							<textarea class="form-control" name="template_data" rows="3"></textarea>
-						</div>
-						<button class="btn btn-primary" type="submit">Create Task</button>
-					</form>
-				</div>
-			</div>
-		</div>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5>Existing lessons & tasks</h5>
+          {% if lessons and lessons|length > 0 %}
+            <div class="accordion" id="lessonsAccordion">
+              {% for lesson in lessons %}
+                <div class="card border-0 mb-2">
+                  <div class="card-header bg-light">
+                    <h2 class="mb-0">
+                      <button class="btn btn-link text-start p-0" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}">{{ lesson.name }}</button>
+                    </h2>
+                  </div>
+                  <div id="collapse{{ forloop.counter }}" class="collapse {% if forloop.first %}show{% endif %}" data-parent="#lessonsAccordion">
+                    <div class="card-body">
+                      {% if lesson.tasks.all %}
+                        <ul class="list-group">
+                          {% for task in lesson.tasks.all %}
+                            <li class="list-group-item">{{ task.name }} <small class="text-muted">({{ task.template_type }})</small></li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <p class="text-muted mb-0">No tasks yet for this lesson.</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">No lessons or tasks yet.</p>
+          {% endif %}
+        </div>
+      </div>
 
-		<div class="col-md-4">
-			<div class="card">
-				<div class="card-body">
-					<h5>Class Students</h5>
-					{% if students and students|length > 0 %}
-						<ul class="list-group">
-							{% for s in students %}
-								<li class="list-group-item">{{ s.get_full_name|default:s.username }}</li>
-							{% endfor %}
-						</ul>
-					{% else %}
-						<p class="text-muted">No students in this class yet.</p>
-					{% endif %}
-				</div>
-			</div>
-		</div>
-	</div>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5>Create lesson</h5>
+          <form method="post" action="{% url 'class-tasks' course.pk %}">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+              <label>Lesson name</label>
+              <input class="form-control" name="lesson_name">
+            </div>
+            <div class="form-group mb-3">
+              <label>Completion date (optional)</label>
+              <input class="form-control" type="datetime-local" name="finish_date">
+              <small class="form-text text-muted">Set a due date for the lesson if desired.</small>
+            </div>
+            <div class="form-group mb-3">
+              <label>Task name (optional)</label>
+              <input class="form-control" name="task_name">
+            </div>
+            <div class="form-group mb-3">
+              <label>Template type</label>
+              <select class="form-control" name="template_type">
+                <option value="none">None</option>
+                <option value="reorder">Reorder</option>
+                <option value="random_click">Random Click</option>
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+              </select>
+            </div>
+            <div class="form-group mb-3">
+              <label>Template data (optional)</label>
+              <textarea class="form-control" name="template_data" rows="3"></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Create lesson</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4" id="presets">
+        <div class="card-body">
+          <h5>Auto-fill lesson presets</h5>
+          <form method="post" action="{% url 'class-tasks' course.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="auto_fill">
+            {% if presets %}
+              {% for preset in presets %}
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="preset_ids" value="{{ preset.pk }}" id="preset{{ preset.pk }}">
+                  <label class="form-check-label" for="preset{{ preset.pk }}">{{ preset.name }}</label>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted mb-0">No lesson presets are available yet. Add them in the admin.</p>
+            {% endif %}
+            <button class="btn btn-outline-primary mt-3" type="submit">Add selected presets</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5>Class students</h5>
+          {% if students and students|length > 0 %}
+            <ul class="list-group">
+              {% for s in students %}
+                <li class="list-group-item">{{ s.get_full_name|default:s.username }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No students in this class yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

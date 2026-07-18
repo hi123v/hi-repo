@@ -10,12 +10,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db import models
-from blog.models import Course, Grade as GradeModel, Lesson, Task
+from collections import defaultdict
+from blog.models import Course, Grade as GradeModel, Lesson, LessonPreset, Task, CompletedTask
+from blog.forms import LessonForm
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils.dateformat import format as df_format
+from datetime import datetime
 
 def register(request, role=None):
     if request.method == 'POST':
@@ -338,13 +341,29 @@ def add_student(request):
     return redirect('teachers')
 
 
+def ensure_user_profile(user, user_type=None):
+    try:
+        profile, _ = Profile.objects.get_or_create(user=user)
+        if user_type and profile.user_type != user_type:
+            profile.user_type = user_type
+            profile.save(update_fields=['user_type'])
+        return profile
+    except Exception:
+        return None
+
+
 def is_teacher(user):
     # Treat superusers as teachers as well
-    return getattr(user, 'is_superuser', False) or (hasattr(user, 'profile') and user.profile.user_type == 'teacher')
+    if getattr(user, 'is_superuser', False):
+        return True
+    try:
+        profile = ensure_user_profile(user, user_type='teacher')
+        return bool(profile and profile.user_type == 'teacher')
+    except Exception:
+        return False
 
 
 @login_required
-@user_passes_test(is_teacher)
 def add_class(request):
     if request.method != 'POST':
         return redirect('teachers')
@@ -354,25 +373,32 @@ def add_class(request):
     if not subject or not grade:
         messages.error(request, 'Subject and grade are required.')
         return redirect('teachers')
-    try:
-        # create a Course entry to represent the class
-        description = f'{grade} • {subject}'
-        course_name = name or f'{grade} {subject}'
-        course = Course.objects.create(name=course_name, description=description)
-        # associate to teacher
-        TeacherCourse.objects.get_or_create(teacher=request.user, course=course)
-        messages.success(request, f'Class "{course.name}" created.')
-        return redirect('teachers')
-    except Exception:
-        messages.error(request, 'Unable to create class.')
-        return redirect('teachers')
+    ensure_user_profile(request.user)
+    # create a Course entry to represent the class
+    description = f'{grade} • {subject}'
+    course_name = name or f'{grade} {subject}'
+    course = Course.objects.create(name=course_name, description=description)
+    # associate to teacher
+    TeacherCourse.objects.get_or_create(teacher=request.user, course=course)
+    messages.success(request, f'Class "{course.name}" created.')
+    return redirect('class-dashboard', course_id=course.id)
 
 
 @login_required
 @user_passes_test(is_teacher)
 def class_dashboard(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
-    return render(request, 'users/class_dashboard.html', {'course': course})
+    students = [rel.student for rel in TeacherStudent.objects.filter(teacher=request.user, accepted=True, student__profile__courses=course).select_related('student')]
+    lesson_count = course.lessons.count()
+    task_count = Task.objects.filter(lesson__course=course).count()
+    presets = LessonPreset.objects.all()
+    return render(request, 'users/class_dashboard.html', {
+        'course': course,
+        'students': students,
+        'lesson_count': lesson_count,
+        'task_count': task_count,
+        'presets': presets,
+    })
 
 
 @login_required
@@ -436,7 +462,40 @@ def class_analytics(request, course_id):
 @user_passes_test(is_teacher)
 def class_profile_page(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
-    return render(request, 'users/class_profile.html', {'course': course})
+    students = [rel.student for rel in TeacherStudent.objects.filter(teacher=request.user, accepted=True, student__profile__courses=course).select_related('student')]
+    student_count = len(students)
+    grade_values = []
+    for student in students:
+        grade_value = None
+        try:
+            grade_text = getattr(student.profile, 'grade', '') or ''
+            digits = ''.join(ch for ch in grade_text if ch.isdigit())
+            if digits:
+                grade_value = int(digits)
+            elif grade_text.lower().startswith('prek') or grade_text.lower().startswith('pre-k'):
+                grade_value = 0
+            elif grade_text.lower().startswith('k'):
+                grade_value = 0
+        except Exception:
+            pass
+        if grade_value is not None:
+            grade_values.append(grade_value)
+    average_grade_level = round(sum(grade_values) / len(grade_values), 1) if grade_values else 0
+    lessons = course.lessons.count()
+    weekly_goal = max(1, student_count) * 2
+    monthly_goal = weekly_goal * 4
+    return render(request, 'users/class_profile.html', {
+        'course': course,
+        'students': students,
+        'student_count': student_count,
+        'average_grade_level': average_grade_level,
+        'lesson_count': lessons,
+        'lessons_per_student_per_day': round(lessons / max(student_count, 1), 2) if student_count else 0,
+        'lessons_per_student_per_week': round((lessons / max(student_count, 1)) * 7, 2) if student_count else 0,
+        'lessons_per_student_per_month': round((lessons / max(student_count, 1)) * 30, 2) if student_count else 0,
+        'weekly_goal': weekly_goal,
+        'monthly_goal': monthly_goal,
+    })
 
 
 @login_required
@@ -457,24 +516,155 @@ def class_task_manager(request, course_id):
             'suggest_register_url': '/register/teacher/'
         })
     if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+        if action == 'auto_fill':
+            preset_ids = request.POST.getlist('preset_ids')
+            created_lessons = []
+            for preset in LessonPreset.objects.filter(pk__in=preset_ids):
+                for lesson_title in preset.lessons_list():
+                    if not Lesson.objects.filter(course=course, name=lesson_title).exists():
+                        Lesson.objects.create(course=course, name=lesson_title)
+                        created_lessons.append(lesson_title)
+            if created_lessons:
+                messages.success(request, f'Added {len(created_lessons)} lesson{"s" if len(created_lessons) != 1 else ""} from the selected presets.')
+            else:
+                messages.info(request, 'Those lessons were already present in this class.')
+            return redirect('class-tasks', course_id=course_id)
+
         lesson_name = request.POST.get('lesson_name', '').strip()
+        finish_date_raw = request.POST.get('finish_date', '').strip()
         task_name = request.POST.get('task_name', '').strip()
         template_type = request.POST.get('template_type', 'none')
         template_data = request.POST.get('template_data', '').strip()
-        if not lesson_name or not task_name:
-            messages.error(request, 'Lesson name and task name are required.')
+        finish_date = None
+        if finish_date_raw:
+            try:
+                finish_date = datetime.fromisoformat(finish_date_raw)
+                if timezone.is_naive(finish_date):
+                    finish_date = timezone.make_aware(finish_date, timezone.get_current_timezone())
+            except ValueError:
+                finish_date = None
+        if not lesson_name:
+            messages.error(request, 'A lesson name is required.')
             return redirect('class-tasks', course_id=course_id)
         try:
-            lesson, _ = Lesson.objects.get_or_create(course=course, name=lesson_name)
-            Task.objects.create(lesson=lesson, name=task_name, template_type=template_type, template_data=template_data)
-            messages.success(request, 'Task created.')
+            lesson, created = Lesson.objects.get_or_create(
+                course=course,
+                name=lesson_name,
+                defaults={'finish_date': finish_date}
+            )
+            if finish_date is not None and lesson.finish_date != finish_date:
+                lesson.finish_date = finish_date
+                lesson.save()
+            if task_name:
+                Task.objects.create(lesson=lesson, name=task_name, template_type=template_type, template_data=template_data)
+                messages.success(request, 'Lesson and task created.')
+            else:
+                messages.success(request, 'Lesson created.')
         except Exception:
-            messages.error(request, 'Unable to create task.')
+            messages.error(request, 'Unable to create lesson.')
         return redirect('class-tasks', course_id=course_id)
     # GET: show tasks for course
-    lessons = course.lessons.prefetch_related('tasks').all()
+    lessons = course.lessons.prefetch_related('tasks').filter(is_hidden=False).all()
     students = [rel.student for rel in TeacherStudent.objects.filter(teacher=request.user, accepted=True, student__profile__courses=course).select_related('student')]
-    return render(request, 'users/class_task_manager.html', {'course': course, 'lessons': lessons, 'students': students})
+    presets = LessonPreset.objects.all()
+    return render(request, 'users/class_task_manager.html', {'course': course, 'lessons': lessons, 'students': students, 'presets': presets})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_lesson_planner(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    lessons = list(course.lessons.prefetch_related('tasks').filter(is_hidden=False).all())
+    lessons.sort(key=lambda lesson: (lesson.finish_date is None, lesson.finish_date or datetime.max))
+    return render(request, 'users/class_lesson_planner.html', {'course': course, 'lessons': lessons})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_lesson_detail(request, course_id, lesson_id):
+    course = get_object_or_404(Course, pk=course_id)
+    lesson = get_object_or_404(Lesson, pk=lesson_id, course=course)
+    from users.models import TeacherCourse
+    if not request.user.is_superuser and not TeacherCourse.objects.filter(teacher=request.user, course=course).exists():
+        messages.error(request, 'You do not have permission to view that lesson.')
+        return redirect('class-lesson-planner', course_id=course_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'add_task':
+            task_name = request.POST.get('task_name', '').strip()
+            template_type = request.POST.get('template_type', 'none')
+            template_data = request.POST.get('template_data', '').strip()
+            if not task_name:
+                messages.error(request, 'A task name is required.')
+            else:
+                Task.objects.create(lesson=lesson, name=task_name, template_type=template_type, template_data=template_data)
+                messages.success(request, f'Task "{task_name}" added to lesson.')
+            return redirect('class-lesson-detail', course_id=course_id, lesson_id=lesson_id)
+
+        if action == 'save_lesson':
+            form = LessonForm(request.POST, instance=lesson)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Lesson details updated.')
+                return redirect('class-lesson-detail', course_id=course_id, lesson_id=lesson_id)
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        form = LessonForm(instance=lesson)
+
+    tasks = lesson.tasks.all()
+    completed_tasks_qs = CompletedTask.objects.filter(task__in=tasks).select_related('user')
+    completions_by_task = defaultdict(list)
+    for completed in completed_tasks_qs:
+        completions_by_task[completed.task_id].append(completed.user)
+    task_rows = [
+        {
+            'task': task,
+            'completed_users': completions_by_task.get(task.id, []),
+            'completed_count': len(completions_by_task.get(task.id, [])),
+        }
+        for task in tasks
+    ]
+
+    if request.method == 'POST' and request.POST.get('action') == 'hide_lesson':
+        lesson.is_hidden = True
+        lesson.save()
+        messages.success(request, 'Lesson hidden from the planner.')
+        return redirect('class-lesson-planner', course_id=course_id)
+
+    return render(request, 'users/class_lesson_detail.html', {
+        'course': course,
+        'lesson': lesson,
+        'form': form,
+        'task_rows': task_rows,
+    })
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_calendar(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    lessons = course.lessons.all()
+    # Provide a simple 7x6 grid days list for the basic calendar view
+    days = list(range(1, 43))
+    return render(request, 'users/class_calendar.html', {'course': course, 'lessons': lessons, 'days': days})
+
+
+@login_required
+@user_passes_test(is_teacher)
+def class_parents(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    students = [rel.student for rel in TeacherStudent.objects.filter(teacher=request.user, accepted=True, student__profile__courses=course).select_related('student')]
+    parent_contacts = []
+    for student in students:
+        try:
+            parent_email = StudentLoginCode.objects.filter(user=student).order_by('-created_at').first()
+            if parent_email and parent_email.parent_email:
+                parent_contacts.append({'student': student, 'parent_email': parent_email.parent_email})
+        except Exception:
+            continue
+    return render(request, 'users/class_parents.html', {'course': course, 'parent_contacts': parent_contacts})
 
 
 @login_required

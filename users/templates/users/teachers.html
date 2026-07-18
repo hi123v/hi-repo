@@ -8,10 +8,25 @@
     border: 1px solid #e5ecf3;
     background: #f8fbff;
     transition: transform .18s ease, box-shadow .18s ease;
+    position: relative;
 }
 .teacher-dashboard .class-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 30px rgba(0,0,0,.08);
+}
+.teacher-dashboard .class-card .remove-class-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .teacher-dashboard .class-info-bar {
     border-radius: 16px;
@@ -111,13 +126,19 @@
                 <div class="row">
                     {% for course in teacher_courses %}
                         <div class="col-md-6 mb-4">
-                            <a href="{% url 'course-detail' course.id %}" class="class-card d-block p-4 text-dark text-decoration-none">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <h5 class="mb-1">{{ course.name }}</h5>
-                                    <span class="badge badge-secondary">Class</span>
-                                </div>
-                                <p class="mb-0 text-muted">{{ course.description|default:'Subject and grade filters set here' }}</p>
-                            </a>
+                            <div class="class-card p-4">
+                                <form method="post" action="{% url 'toggle-class' course.id %}" class="mb-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger remove-class-btn" title="Remove class">−</button>
+                                </form>
+                                <a href="{% url 'class-dashboard' course.id %}" class="d-block text-dark text-decoration-none mt-3 pt-2">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="mb-1">{{ course.name }}</h5>
+                                        <span class="badge badge-secondary">Class</span>
+                                    </div>
+                                    <p class="mb-0 text-muted">{{ course.description|default:'Subject and grade filters set here' }}</p>
+                                </a>
+                            </div>
                         </div>
                     {% endfor %}
                 </div>

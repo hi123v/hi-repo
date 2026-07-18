@@ -1,0 +1,81 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-section">
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6 mx-auto">
+                <div class="card border-danger shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Delete Lesson
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Warning!</strong> This action cannot be undone.
+                        </div>
+
+                        <p>Are you sure you want to delete the lesson:</p>
+                        <div class="alert alert-info mb-4">
+                            <h5 class="mb-0">
+                                <strong>{{ lesson.name }}</strong>
+                                <br>
+                                <small class="text-muted">Course: {{ lesson.course.name }}</small>
+                            </h5>
+                        </div>
+
+                        {% if lesson.tasks.count > 0 %}
+                            <div class="alert alert-danger" role="alert">
+                                <strong>Note:</strong> This lesson has {{ lesson.tasks.count }} task{{ lesson.tasks.count|pluralize }}.
+                                Deleting this lesson will also delete all associated tasks.
+                            </div>
+                        {% endif %}
+
+                        <form method="POST" class="mt-4">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-danger btn-lg btn-block">
+                                    <i class="fas fa-trash"></i>
+                                    Yes, Delete Lesson
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <a href="{% url 'course-detail' lesson.course.id %}" class="btn btn-secondary btn-lg btn-block">
+                                    <i class="fas fa-times"></i>
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .content-section {
+        padding: 20px 20px;
+        background: #fafafa;
+        border: 1px solid #dddddd;
+        border-radius: 3px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        margin-top: 20px;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .alert {
+        border-radius: 4px;
+    }
+</style>
+{% endblock content %}

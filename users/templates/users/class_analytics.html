@@ -1,6 +1,47 @@
 {% extends "blog/base.html" %}
 
 {% block content %}
-<h2>Analytics - {{ course.name }}</h2>
-<p>This page is intentionally blank for now.</p>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Analytics - {{ course.name }}</h2>
+            <p class="text-muted mb-0">A quick overview of this class and its current activity.</p>
+        </div>
+        <div>
+            <a href="{% url 'class-dashboard' course.pk %}" class="btn btn-outline-secondary">Back to dashboard</a>
+            <a href="{% url 'teachers' %}" class="btn btn-outline-secondary ml-2">Back to classes</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Class overview</h5>
+                    <p class="card-text mb-2"><strong>Description:</strong> {{ course.description|default:'No description yet.' }}</p>
+                    <p class="card-text mb-0"><strong>Students:</strong> {{ course.students.count|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Lesson progress</h5>
+                    <p class="card-text mb-0">This class currently has {{ course.lessons.count }} lesson{{ course.lessons.count|pluralize }} and {{ course.lessons.all|length }} task{{ course.lessons.all|length|pluralize }} available to students.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Next steps</h5>
+                    <p class="card-text mb-2">Invite students, add lessons, and track their activity from the class dashboard.</p>
+                    <a href="{% url 'class-students' course.pk %}" class="btn btn-primary btn-sm">Manage students</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

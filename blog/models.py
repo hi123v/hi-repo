@@ -45,12 +45,33 @@ class Grade(models.Model):
 class Lesson(models.Model):
     course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+    finish_date = models.DateTimeField(blank=True, null=True, help_text='The date when students should finish this lesson.')
+    is_hidden = models.BooleanField(default=False, help_text='Hide this lesson from lesson planners and teacher views when completed.')
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
         return reverse('lesson-detail', kwargs={'pk': self.pk})
+
+
+class LessonPreset(models.Model):
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True, default='')
+    lesson_titles = models.TextField(blank=True, default='', help_text='Add one lesson title per line.')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def lessons_list(self):
+        if not self.lesson_titles:
+            return []
+        return [line.strip() for line in self.lesson_titles.splitlines() if line.strip()]
+
 
 class Task(models.Model):
     lesson = models.ForeignKey(Lesson, related_name='tasks', on_delete=models.CASCADE)

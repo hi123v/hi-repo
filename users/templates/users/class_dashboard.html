@@ -1,45 +1,68 @@
 {% extends "blog/base.html" %}
 
 {% block content %}
-<h2>Class Dashboard: {{ course.name }}</h2>
-<div class="container">
-  <div class="row">
-    <div class="col-md-8">
-      <div class="card mb-3">
-        <div class="card-body">
-          <h5>Overview</h5>
-          <p>{{ course.description|default:'No description' }}</p>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Class Dashboard: {{ course.name }}</h2>
+      <p class="text-muted mb-0">{{ course.description|default:'A ready-to-use classroom hub for lessons, students, and progress.' }}</p>
+    </div>
+    <div>
+      <a href="{% url 'class-profile' course.pk %}" class="btn btn-outline-secondary">Open class profile</a>
+      <a href="{% url 'teachers' %}" class="btn btn-outline-secondary ml-2">Back to classes</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body text-center py-5">
+          <h3 class="mb-3">Add lessons</h3>
+          <p class="text-muted mb-4">Create a fresh lesson, or choose preset lesson bundles to auto-fill this class.</p>
+          <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <a href="{% url 'class-tasks' course.pk %}" class="btn btn-primary">Create lesson</a>
+            <a href="{% url 'class-tasks' course.pk %}#presets" class="btn btn-outline-primary">Use preset bundles</a>
+          </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <a class="card card-body text-center" href="{% url 'class-students' course.pk %}">Students</a>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <h5>Class snapshot</h5>
+              <p class="mb-2"><strong>Students:</strong> {{ students|length }}</p>
+              <p class="mb-2"><strong>Lessons:</strong> {{ lesson_count }}</p>
+              <p class="mb-0"><strong>Tasks:</strong> {{ task_count }}</p>
+            </div>
+          </div>
         </div>
-        <div class="col-md-4 mb-3">
-          <a class="card card-body text-center" href="{% url 'class-analytics' course.pk %}">Analytics</a>
-        </div>
-        <div class="col-md-4 mb-3">
-          <a class="card card-body text-center" href="{% url 'class-profile' course.pk %}">Class Profile</a>
-        </div>
-        <div class="col-md-4 mb-3">
-          <a class="card card-body text-center" href="{% url 'class-points' course.pk %}">Class Points</a>
-        </div>
-        <div class="col-md-4 mb-3">
-          <a class="card card-body text-center" href="{% url 'class-tasks' course.pk %}">Task Manager</a>
+        <div class="col-md-6">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <h5>Quick tools</h5>
+              <div class="d-grid gap-2">
+                <a href="{% url 'class-students' course.pk %}" class="btn btn-outline-dark btn-sm">Students</a>
+                <a href="{% url 'class-analytics' course.pk %}" class="btn btn-outline-dark btn-sm">Analytics</a>
+                <a href="{% url 'class-points' course.pk %}" class="btn btn-outline-dark btn-sm">Class points</a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card">
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
         <div class="card-body">
-          <h5>Quick Links</h5>
-          <ul class="list-unstyled">
-            <li><a href="{% url 'class-students' course.pk %}">Students</a></li>
-            <li><a href="{% url 'class-analytics' course.pk %}">Analytics</a></li>
-            <li><a href="{% url 'class-profile' course.pk %}">Class Profile</a></li>
-            <li><a href="{% url 'class-points' course.pk %}">Class Points</a></li>
-            <li><a href="{% url 'class-tasks' course.pk %}">Task Manager</a></li>
-          </ul>
+          <h5>Teacher tools</h5>
+          <div class="d-grid gap-2">
+            <a href="{% url 'class-tasks' course.pk %}" class="btn btn-outline-primary">Teacher Lessons</a>
+            <a href="{% url 'class-lesson-planner' course.pk %}" class="btn btn-outline-primary">Lesson Planner</a>
+            <a href="{% url 'class-calendar' course.pk %}" class="btn btn-outline-primary">Calendar</a>
+            <a href="{% url 'class-parents' course.pk %}" class="btn btn-outline-primary">Parents List</a>
+            <a href="{% url 'class-profile' course.pk %}" class="btn btn-outline-secondary">Class Profile</a>
+          </div>
         </div>
       </div>
     </div>

@@ -7,11 +7,12 @@ from .models import Profile
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.get_or_create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    profile, _ = Profile.objects.get_or_create(user=instance)
+    profile.save()
 
 # --- Add this for welcome email on login ---
 from django.contrib.auth.signals import user_logged_in

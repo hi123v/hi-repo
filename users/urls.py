@@ -40,5 +40,9 @@ urlpatterns = [
     path('teachers/class/<int:course_id>/profile/', views.class_profile_page, name='class-profile'),
     path('teachers/class/<int:course_id>/points/', views.class_points_page, name='class-points'),
     path('teachers/class/<int:course_id>/tasks/', views.class_task_manager, name='class-tasks'),
+    path('teachers/class/<int:course_id>/lesson-planner/', views.class_lesson_planner, name='class-lesson-planner'),
+    path('teachers/class/<int:course_id>/lesson/<int:lesson_id>/', views.class_lesson_detail, name='class-lesson-detail'),
+    path('teachers/class/<int:course_id>/calendar/', views.class_calendar, name='class-calendar'),
+    path('teachers/class/<int:course_id>/parents/', views.class_parents, name='class-parents'),
     path('teachers/class/<int:course_id>/toggle/', views.toggle_teacher_class, name='toggle-class'),
 ]

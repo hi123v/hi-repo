@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-from .models import Task, Course, CompletedTask, Grade
+from .models import Task, Course, CompletedTask, Grade, Lesson, Game
 from .models import NewsletterSubscriber
 from django.core.mail import send_mail
 from django.conf import settings
@@ -15,7 +15,7 @@ from django.views.generic import (
     DeleteView
 )
 from .models import Post, Course, SiteSectionItem, Game
-from .forms import PostForm
+from .forms import PostForm, LessonForm
 import random
 from django.contrib.auth import get_user_model
 from users.models import Profile
@@ -355,3 +355,128 @@ def leaderboard(request):
     # Only show users in the same league as the current user
     profiles = Profile.objects.filter(league=user_league).select_related('user').order_by('-points')[:20]
     return render(request, 'blog/leaderboard.html', {'profiles': profiles, 'user_league': user_league})
+
+
+# Lesson Planner Views
+def is_teacher(user):
+    """Check if user is a teacher or superuser."""
+    try:
+        if not getattr(user, 'is_authenticated', False):
+            return False
+        if user.is_superuser:
+            return True
+        if hasattr(user, 'profile') and getattr(user.profile, 'user_type', None) == 'teacher':
+            return True
+        return False
+    except Exception:
+        return False
+
+
+@login_required
+@user_passes_test(is_teacher)
+def lesson_planner(request):
+    """Display lesson planner dashboard for teachers."""
+    # Get all courses the teacher owns or manages
+    from users.models import TeacherCourse
+    teacher_courses = []
+    try:
+        teacher_courses = [tc.course for tc in TeacherCourse.objects.filter(teacher=request.user).select_related('course')]
+    except Exception:
+        # Fallback: if TeacherCourse doesn't exist, show all courses for superusers
+        if request.user.is_superuser:
+            teacher_courses = Course.objects.all()
+    
+    # Get all lessons for the teacher's courses
+    lessons = Lesson.objects.filter(course__in=teacher_courses).order_by('course', 'finish_date')
+    
+    return render(request, 'blog/lesson_planner.html', {
+        'lessons': lessons,
+        'courses': teacher_courses,
+        'title': 'Lesson Planner'
+    })
+
+
+@login_required
+@user_passes_test(is_teacher)
+def create_lesson(request, course_id):
+    """Create a new lesson for a course."""
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Verify teacher owns this course
+    from users.models import TeacherCourse
+    if not request.user.is_superuser:
+        if not TeacherCourse.objects.filter(teacher=request.user, course=course).exists():
+            messages.error(request, "You don't have permission to add lessons to this course.")
+            return redirect('lesson-planner')
+    
+    if request.method == 'POST':
+        form = LessonForm(request.POST)
+        if form.is_valid():
+            lesson = form.save(commit=False)
+            lesson.course = course
+            lesson.save()
+            messages.success(request, f"Lesson '{lesson.name}' created successfully!")
+            return redirect('course-detail', course_id=course.id)
+    else:
+        form = LessonForm()
+    
+    return render(request, 'blog/lesson_form.html', {
+        'form': form,
+        'course': course,
+        'title': f'Create Lesson in {course.name}'
+    })
+
+
+@login_required
+@user_passes_test(is_teacher)
+def edit_lesson(request, lesson_id):
+    """Edit an existing lesson."""
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    
+    # Verify teacher owns this course
+    from users.models import TeacherCourse
+    if not request.user.is_superuser:
+        if not TeacherCourse.objects.filter(teacher=request.user, course=lesson.course).exists():
+            messages.error(request, "You don't have permission to edit this lesson.")
+            return redirect('lesson-planner')
+    
+    if request.method == 'POST':
+        form = LessonForm(request.POST, instance=lesson)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Lesson '{lesson.name}' updated successfully!")
+            return redirect('course-detail', course_id=lesson.course.id)
+    else:
+        form = LessonForm(instance=lesson)
+    
+    return render(request, 'blog/lesson_form.html', {
+        'form': form,
+        'lesson': lesson,
+        'title': f'Edit Lesson: {lesson.name}'
+    })
+
+
+@login_required
+@user_passes_test(is_teacher)
+def delete_lesson(request, lesson_id):
+    """Delete a lesson."""
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    course_id = lesson.course.id
+    
+    # Verify teacher owns this course
+    from users.models import TeacherCourse
+    if not request.user.is_superuser:
+        if not TeacherCourse.objects.filter(teacher=request.user, course=lesson.course).exists():
+            messages.error(request, "You don't have permission to delete this lesson.")
+            return redirect('lesson-planner')
+    
+    if request.method == 'POST':
+        lesson_name = lesson.name
+        lesson.delete()
+        messages.success(request, f"Lesson '{lesson_name}' deleted successfully!")
+        return redirect('course-detail', course_id=course_id)
+    
+    return render(request, 'blog/lesson_confirm_delete.html', {
+        'lesson': lesson,
+        'title': f'Delete Lesson: {lesson.name}'
+    })

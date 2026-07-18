@@ -1,6 +1,12 @@
 {% extends "blog/base.html" %}
 
 {% block content %}
-<h2>Class Points - {{ course.name }}</h2>
+<div class="d-flex align-items-center mb-3">
+	<h2 class="mb-0">Class Points - {{ course.name }}</h2>
+	<div class="ml-auto">
+		<a href="{% url 'class-dashboard' course.pk %}" class="btn btn-outline-secondary">Back to dashboard</a>
+		<a href="{% url 'teachers' %}" class="btn btn-outline-secondary ml-2">Back to classes</a>
+	</div>
+</div>
 <p>Placeholder page.</p>
 {% endblock %}
